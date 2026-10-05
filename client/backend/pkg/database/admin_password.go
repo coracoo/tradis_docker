@@ -10,6 +10,12 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
+// Prefer the historical default administrator in legacy multi-user databases.
+// A renamed administrator is recoverable only when it is the sole user; there
+// is no role column that would safely identify it among multiple renamed users.
+const adminPasswordUpdateSQL = `UPDATE users SET password = ?, token_version = token_version + 1, updated_at = CURRENT_TIMESTAMP
+	WHERE username = 'admin' OR (SELECT COUNT(*) FROM users) = 1`
+
 func ValidateAdminPassword(password string) error {
 	if len(password) < 8 {
 		return fmt.Errorf("new password must be at least 8 characters")
@@ -60,7 +66,7 @@ func ResetAdminPasswordAt(dbPath, password string) error {
 		return fmt.Errorf("hash password: %w", err)
 	}
 	result, err := conn.Exec(
-		"UPDATE users SET password = ?, token_version = token_version + 1, updated_at = CURRENT_TIMESTAMP WHERE username = 'admin'",
+		adminPasswordUpdateSQL,
 		string(hash),
 	)
 	if err != nil {
@@ -71,7 +77,7 @@ func ResetAdminPasswordAt(dbPath, password string) error {
 		return fmt.Errorf("read update result: %w", err)
 	}
 	if affected != 1 {
-		return fmt.Errorf("admin user not found")
+		return fmt.Errorf("administrator account is missing or ambiguous")
 	}
 	return nil
 }

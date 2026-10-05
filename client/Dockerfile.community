@@ -10,7 +10,7 @@ ARG GOPROXY=""
 ENV CGO_ENABLED=1
 WORKDIR /app/backend
 
-ARG CLIENT_VERSION="v0.9.7" # x-release-please-version
+ARG CLIENT_VERSION="v0.9.8" # x-release-please-version
 COPY backend/go.mod backend/go.sum ./
 RUN go mod download
 COPY backend ./
@@ -46,7 +46,7 @@ ENV PROJECT_ROOT=
 ENV APPSTORE_CDN_URL=
 ENV CLOUDFLARE_SPEED_TEST=false
 
-ARG CLIENT_VERSION="v0.9.7" # x-release-please-version
+ARG CLIENT_VERSION="v0.9.8" # x-release-please-version
 ENV CLIENT_VERSION=${CLIENT_VERSION}
 
 RUN apk add --no-cache \

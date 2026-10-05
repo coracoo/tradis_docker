@@ -416,12 +416,15 @@ async function copyPort(port) {
   const start = Number(port.port)
   const end = Number(port.end_port || port.port)
   const label = end > start ? `${start}-${end}` : `${start}`
-  const copied = await copyToClipboard(label)
+  const hostname = window.location.hostname || '127.0.0.1'
+  const host = hostname.includes(':') && !hostname.startsWith('[') ? `[${hostname}]` : hostname
+  const address = `${host}:${label}`
+  const copied = await copyToClipboard(address)
 
   if (copied) {
-    toast.success(`已复制端口 ${label}`)
+    toast.success(`已复制地址 ${address}`)
   } else {
-    toast.error('复制端口失败')
+    toast.error('复制地址失败')
   }
 }
 

@@ -83,7 +83,7 @@
             <span v-else>登 录</span>
           </button>
           
-          <p v-if="errorMessage" class="form-error">{{ errorMessage }}</p>
+          <p v-if="errorMessage" class="form-error" role="alert">{{ errorMessage }}</p>
         </form>
         
         <!-- 强制修改密码表单 -->
@@ -154,14 +154,14 @@
             <span v-else>修改密码并登录</span>
           </button>
           
-          <p v-if="errorMessage" class="form-error">{{ errorMessage }}</p>
+          <p v-if="errorMessage" class="form-error" role="alert">{{ errorMessage }}</p>
         </form>
       </div>
     </div>
     
     <!-- 版本信息 -->
     <div class="version-info">
-      <span>TRADIS v0.9.7</span><!-- x-release-please-version -->
+      <span>TRADIS v0.9.8</span><!-- x-release-please-version -->
     </div>
   </div>
 </template>
@@ -291,8 +291,32 @@ function showErrorMessage(message) {
   }
 }
 
+function getLoginErrorMessage(error) {
+  if (error?.status === 401) return '账号或密码错误，请检查后重试'
+  if (error?.status === 429) return '登录尝试过于频繁，请稍后重试'
+
+  const message = (typeof error?.payload?.message === 'string'
+    ? error.payload.message
+    : error?.message || '').trim()
+  const translatedMessages = {
+    'Invalid request': '登录请求无效，请检查账号和密码后重试',
+    'Database error': '登录服务异常：数据库不可用，请稍后重试',
+    'Could not generate token': '登录服务异常：无法创建登录会话，请稍后重试'
+  }
+  if (Object.hasOwn(translatedMessages, message)) return translatedMessages[message]
+  if (/请求超时|timeout|timed out/i.test(message)) return '登录请求超时，请检查网络后重试'
+  if (/failed to fetch|fetch failed|networkerror|network request failed|load failed/i.test(message)) {
+    return '无法连接登录服务，请检查网络和服务地址'
+  }
+  if (message && !/^请求失败:\s*\d+$/.test(message)) return message
+  if (error?.status >= 500) return `登录服务暂时不可用（HTTP ${error.status}），请稍后重试`
+  if (error?.status) return `登录失败（HTTP ${error.status}），请稍后重试`
+  return '登录失败，请稍后重试'
+}
+
 // 处理登录
 async function handleLogin() {
+  if (loading.value) return
   if (!validateLoginForm()) return
   
   loading.value = true
@@ -304,7 +328,11 @@ async function handleLogin() {
       password: form.password
     })
     
-    if (!data.error) {
+    if (!data?.error) {
+      if (!data || typeof data.token !== 'string' || !data.token.trim()) {
+        showErrorMessage('登录服务返回无效响应，请稍后重试')
+        return
+      }
       // 存储 token
       if (data.token) {
         localStorage.setItem('token', data.token)
@@ -329,7 +357,7 @@ async function handleLogin() {
       showErrorMessage(data.error || '登录失败')
     }
   } catch (error) {
-    showErrorMessage(error.message || '网络错误，请稍后重试')
+    showErrorMessage(getLoginErrorMessage(error))
   } finally {
     loading.value = false
   }
@@ -337,6 +365,7 @@ async function handleLogin() {
 
 // 处理修改密码
 async function handleChangePassword() {
+  if (loading.value) return
   if (!validatePasswordForm()) return
   
   loading.value = true

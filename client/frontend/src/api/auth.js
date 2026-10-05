@@ -28,6 +28,15 @@ export const changePassword = (data) => {
 }
 
 /**
+ * 修改当前管理员账号
+ * @param {Object} data - { newUsername, currentPassword }
+ * @returns {Promise}
+ */
+export const changeUsername = (data) => {
+  return post('/auth/change-username', data)
+}
+
+/**
  * 退出登录
  * @returns {Promise}
  */
@@ -40,5 +49,6 @@ export default {
   login,
   getMe,
   changePassword,
+  changeUsername,
   logout
 }

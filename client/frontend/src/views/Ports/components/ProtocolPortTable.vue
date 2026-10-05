@@ -28,12 +28,11 @@
       <template #cell-port="{ row }">
         <div class="port-identity">
           <strong>{{ formatPortRange(row) }}</strong>
-          <small>{{ row.end_port > row.port ? 'PORT RANGE' : 'PORT' }}</small>
         </div>
       </template>
 
       <template #cell-source="{ row }">
-        <span class="source-badge" :class="String(row.type || 'unknown').toLowerCase()">
+        <span class="source-badge" :class="`source-${String(row.type || 'unknown').toLowerCase()}`">
           {{ row.type || 'Unknown' }}
         </span>
       </template>
@@ -66,7 +65,8 @@
             v-ripple
             type="button"
             class="port-action-btn copy-port-btn"
-            title="复制端口"
+            title="复制访问地址"
+            :aria-label="`复制 ${formatPortRange(row)} 的访问地址`"
             @click.stop="$emit('copy-port', row, protocol)"
           >
             <DynamicIcon name="copy" :size="14" />
@@ -322,13 +322,6 @@ function handleScroll(event) {
   white-space: nowrap;
 }
 
-.port-identity small {
-  color: var(--text-secondary, #64748b);
-  font-family: var(--font-mono, 'JetBrains Mono', monospace);
-  font-size: 0.5625rem;
-  letter-spacing: 0.03em;
-}
-
 .source-badge {
   display: inline-flex;
   align-items: center;
@@ -348,19 +341,19 @@ function handleScroll(event) {
   white-space: nowrap;
 }
 
-.source-badge.host {
+.source-badge.source-host {
   border-color: var(--color-primary-300);
   background: var(--color-primary-100);
   color: var(--color-primary-700);
 }
 
-.source-badge.container {
+.source-badge.source-container {
   border-color: var(--color-success-300);
   background: var(--color-success-100);
   color: var(--color-success-700);
 }
 
-.source-badge.reserved {
+.source-badge.source-reserved {
   border-color: var(--color-warning-300);
   background: var(--color-warning-100);
   color: var(--color-warning-700);

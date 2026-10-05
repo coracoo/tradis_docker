@@ -168,7 +168,7 @@ let versionTimer = null
 
 const localVersionText = computed(() => {
   const v = String(localVersion.value || '').trim()
-  if (!v) return 'v0.9.7' // x-release-please-version
+  if (!v) return 'v0.9.8' // x-release-please-version
   return v.startsWith('v') ? v : `v${v}`
 })
 

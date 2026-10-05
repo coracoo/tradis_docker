@@ -15,7 +15,7 @@
           />
         </div>
         <div class="toolbar-right">
-          <button class="secondary-btn" :disabled="loading" @click="refreshSettingsPage">
+          <button class="secondary-btn" :disabled="accountBusy" @click="refreshSettingsPage">
             <DynamicIcon name="refresh" :size="16" />
             刷新
           </button>
@@ -94,13 +94,31 @@
             </h3>
           </div>
           <div class="card-body">
-            <div class="form-group">
+            <form class="form-group" data-account-form="username" @submit.prevent="updateUsername">
+              <label class="form-label" for="admin-new-username">修改管理员账号</label>
+              <p v-if="currentUsername" class="form-hint">当前账号：{{ currentUsername }}</p>
+              <p v-else-if="currentUserLoading" class="form-hint">正在加载当前账号...</p>
+              <p v-else-if="currentUserError" class="form-hint">
+                当前账号加载失败。
+                <button type="button" class="btn btn-default" data-account-retry @click="loadCurrentUser">重试</button>
+              </p>
+              <input id="admin-new-username" v-model="usernameForm.newUsername" type="text" autocomplete="username" class="form-input" placeholder="新管理员账号" :disabled="!currentUsername || accountBusy" />
+              <input v-model="usernameForm.currentPassword" type="password" autocomplete="current-password" aria-label="修改账号的当前密码" class="form-input mt-2" placeholder="输入当前密码确认" :disabled="!currentUsername || accountBusy" />
+              <p class="form-hint">账号为 1–64 个字符，支持中文，不能包含空白或控制字符。修改后密码不变，其他已登录会话需要重新登录。</p>
+              <div class="form-actions">
+                <button v-ripple type="submit" class="btn btn-primary" :class="{ 'is-loading': usernameLoading }" :disabled="!currentUsername || accountBusy">
+                  <span v-if="usernameLoading" class="btn-spinner"></span>
+                  更新账号
+                </button>
+              </div>
+            </form>
+            <div class="form-group" data-account-form="password">
               <label class="form-label">修改管理员密码</label>
               <input v-model="passwordForm.oldPassword" type="password" class="form-input" placeholder="当前密码" />
               <input v-model="passwordForm.newPassword" type="password" class="form-input mt-2" placeholder="新密码" />
               <input v-model="passwordForm.confirmPassword" type="password" class="form-input mt-2" placeholder="确认新密码" />
               <div class="form-actions">
-                <button v-ripple class="btn btn-primary" :class="{ 'is-loading': passwordLoading }" :disabled="passwordLoading" @click="updatePassword">
+                <button v-ripple class="btn btn-primary" :class="{ 'is-loading': passwordLoading }" :disabled="accountBusy" @click="updatePassword">
                   <span v-if="passwordLoading" class="btn-spinner"></span>
                   更新密码
                 </button>
@@ -1102,6 +1120,12 @@ const settingsForm = ref({
 const editionFields = ref(createEditionSettingsFields())
 const fullServiceFieldsRef = ref(null)
 
+// 当前管理员账号
+const currentUsername = ref('')
+const currentUserError = ref('')
+const currentUserLoading = ref(false)
+const usernameForm = ref({ newUsername: '', currentPassword: '' })
+
 // 密码表单
 const passwordForm = ref({
   oldPassword: '',
@@ -1123,7 +1147,10 @@ const deploymentPolicyForm = ref(createDeploymentPolicyForm())
 
 // 加载状态
 const loading = ref(false)
+const pageRefreshing = ref(true)
 const passwordLoading = ref(false)
+const usernameLoading = ref(false)
+const accountBusy = computed(() => pageRefreshing.value || loading.value || currentUserLoading.value || usernameLoading.value || passwordLoading.value)
 const advancedModeLoading = ref(false)
 const diagnosticExporting = ref(false)
 const serverLoading = ref(false)
@@ -1396,8 +1423,64 @@ const saveAdvancedMode = async (requestedValue) => {
   }
 }
 
+const loadCurrentUser = async () => {
+  if (currentUserLoading.value || usernameLoading.value || passwordLoading.value) return
+  currentUserLoading.value = true
+  currentUserError.value = ''
+  try {
+    const data = await auth.getMe()
+    currentUsername.value = data.username
+  } catch (error) {
+    currentUserError.value = error.message || '未知错误'
+    toast.error('加载管理员账号失败: ' + currentUserError.value)
+  } finally {
+    currentUserLoading.value = false
+  }
+}
+
+const updateUsername = async () => {
+  if (accountBusy.value || !currentUsername.value) return
+  const newUsername = usernameForm.value.newUsername.trim()
+  if (!newUsername) {
+    toast.warning('请输入新管理员账号')
+    return
+  }
+  if (Array.from(newUsername).length > 64 || /[\p{White_Space}\p{Cc}\uD800-\uDFFF]/u.test(newUsername)) {
+    toast.warning('账号最多 64 个字符，不能包含空白或控制字符')
+    return
+  }
+  if (newUsername === currentUsername.value) {
+    toast.warning('新账号不能与当前账号相同')
+    return
+  }
+  if (!usernameForm.value.currentPassword) {
+    toast.warning('请输入当前密码')
+    return
+  }
+
+  usernameLoading.value = true
+  try {
+    const data = await auth.changeUsername({
+      newUsername,
+      currentPassword: usernameForm.value.currentPassword
+    })
+    if (data?.token) localStorage.setItem('token', data.token)
+    currentUsername.value = data.username
+    if (localStorage.getItem('rememberedUsername') !== null) {
+      localStorage.setItem('rememberedUsername', data.username)
+    }
+    usernameForm.value = { newUsername: '', currentPassword: '' }
+    toast.success('管理员账号修改成功')
+  } catch (error) {
+    toast.error('修改管理员账号失败: ' + (error.message || '未知错误'))
+  } finally {
+    usernameLoading.value = false
+  }
+}
+
 // 修改密码
 const updatePassword = async () => {
+  if (accountBusy.value) return
   if (!passwordForm.value.oldPassword) {
     toast.warning('请输入当前密码')
     return
@@ -1900,35 +1983,47 @@ async function exportDiagnosticBundle() {
 }
 
 async function refreshSettingsPage() {
-  await Promise.all([
-    loadSettings(),
-    loadDeploymentPolicy(),
-    refreshVolumeOptions(),
-    loadNotificationChannels()
-  ])
-  if (isFullEdition) {
-    await Promise.all([fullServiceFieldsRef.value?.refresh?.(), loadLicenseStatus()])
+  if (accountBusy.value) return
+  pageRefreshing.value = true
+  try {
+    await Promise.all([
+      loadCurrentUser(),
+      loadSettings(),
+      loadDeploymentPolicy(),
+      refreshVolumeOptions(),
+      loadNotificationChannels()
+    ])
+    if (isFullEdition) {
+      await Promise.all([fullServiceFieldsRef.value?.refresh?.(), loadLicenseStatus()])
+    }
+    toast.success('设置已刷新')
+  } finally {
+    pageRefreshing.value = false
   }
-  toast.success('设置已刷新')
 }
 
 onMounted(async () => {
   settingsMounted.value = true
   themeStore.init()
+  const currentUserRequest = loadCurrentUser()
   try {
     await loadFullSettingsDependencies()
   } catch (error) {
     console.error('加载版本专属设置依赖失败:', error)
   }
-  loadSettings()
-  loadDeploymentPolicy()
-  refreshVolumeOptions()
-  loadNotificationChannels()
-  if (isFullEdition) {
-    fullServiceFieldsRef.value?.refresh?.()
-    loadLicenseStatus()
+  try {
+    await Promise.all([
+      currentUserRequest,
+      loadSettings(),
+      loadDeploymentPolicy(),
+      refreshVolumeOptions(),
+      loadNotificationChannels(),
+      ...(isFullEdition ? [fullServiceFieldsRef.value?.refresh?.(), loadLicenseStatus()] : [])
+    ])
+    if (route.query?.section) await scrollSettingSectionIntoView(route.query.section)
+  } finally {
+    pageRefreshing.value = false
   }
-  if (route.query?.section) await scrollSettingSectionIntoView(route.query.section)
 })
 </script>
 

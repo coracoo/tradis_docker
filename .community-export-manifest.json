@@ -1,12 +1,12 @@
 {
   "schemaVersion": 1,
-  "version": "0.9.7",
+  "version": "0.9.8",
   "edition": "tradis-community",
   "buildTag": "community",
-  "generatedAt": "2026-10-05T20:13:54+08:00",
+  "generatedAt": "2026-10-05T23:22:57+08:00",
   "source": {
     "mode": "git-ref",
-    "commit": "7e2c557d41ab0357ce0d9f232dc7e910a847b457",
+    "commit": "98dec74fe329ff7ede745ec22096857339bdc74f",
     "dirty": false,
     "gitHistoryIncluded": false
   },
@@ -45,7 +45,7 @@
     },
     {
       "path": "client/Dockerfile.community",
-      "sha256": "772c4dbfcdc3d42be9199c560d06f9e55e73f56cca755cd20b4290cdd8db2297"
+      "sha256": "b37edf48fdbb750eb52b710b8c77434bedd6718524b1c3735751da18ecd8ca9e"
     },
     {
       "path": "client/backend/api/ai_compose.go",
@@ -109,7 +109,7 @@
     },
     {
       "path": "client/backend/api/auth.go",
-      "sha256": "9fd913515e937e6ef797a165be8367a6275b23753eb19ce7a31a4b0fb311422e"
+      "sha256": "44903f477df74e14370c56dedcebe4a797b3c974b35bc7bf8e14fd5009df89ca"
     },
     {
       "path": "client/backend/api/cleanup.go",
@@ -277,7 +277,7 @@
     },
     {
       "path": "client/backend/api/settings_community.go",
-      "sha256": "c88dc735e46854e937e0a3bfc7952bd9ada7738754998a9c94f3c730d012b5ab"
+      "sha256": "77c5fef3fb7e1322bba365c5e4069750652c3dd0b5c72fd63e31bd3202377c06"
     },
     {
       "path": "client/backend/api/settings_edition_community.go",
@@ -405,7 +405,7 @@
     },
     {
       "path": "client/backend/pkg/database/admin_password.go",
-      "sha256": "ef24607fb42dee53e22dfe7fb326f64e4f8c7c7430c3f5aa01ad58a2903d2188"
+      "sha256": "1e28ab6f97984ab33c75843b6c4bde6ef6bf050676c7a5d0a6aa9b605def151a"
     },
     {
       "path": "client/backend/pkg/database/ai_logs.go",
@@ -429,7 +429,7 @@
     },
     {
       "path": "client/backend/pkg/database/db.go",
-      "sha256": "f21b05d9e72799b78e5ffd2390facde9b443dc11e2a09ac99db7b0bfa881628d"
+      "sha256": "793faa3aaba1b4ffcf5300eadaad8b73f45e77f2631defe335f4b39bd349ee67"
     },
     {
       "path": "client/backend/pkg/database/deployment_job.go",
@@ -665,7 +665,7 @@
     },
     {
       "path": "client/docker-compose.community.yml",
-      "sha256": "af05a169f2d4caf55e487fe5e108d0889aea731af84bbefc80847a91de4b512a"
+      "sha256": "28eb5e29b0a1db034976fef7aff8e5a0c7c924ec64dc88e91dc3424d3a31c798"
     },
     {
       "path": "client/docker-compose.yml",
@@ -677,7 +677,7 @@
     },
     {
       "path": "client/frontend/package.json",
-      "sha256": "7ccf0f8ade8650253c7504c2f562e089ef1127eb8439bfe19ad0a9ba7736e139"
+      "sha256": "d9c09e3a7e90b26c3f46de0f5980a971dd69dd0483411143265d7392997e2f2b"
     },
     {
       "path": "client/frontend/postcss.config.js",
@@ -825,7 +825,7 @@
     },
     {
       "path": "client/frontend/src/api/auth.js",
-      "sha256": "73aae7e05926e4733009f8cb8720539137284ff11d0a82f530e2b62db33e5901"
+      "sha256": "a02e4f8d86036c9245bbc21b256efa289d80cb75747545e53cb476ef97d73c7a"
     },
     {
       "path": "client/frontend/src/api/cleanup.js",
@@ -1041,7 +1041,7 @@
     },
     {
       "path": "client/frontend/src/components/layout/AppSidebar.vue",
-      "sha256": "0f5676fb65f4e731083dd4f06a79459b3520928bf5bdda6ddce9832f4de15640"
+      "sha256": "b1634b1c37162d5191157a8fa255f578803a3bec466eafee3ba16dc5ed21ecbd"
     },
     {
       "path": "client/frontend/src/components/layout/GlobalSearch.vue",
@@ -1297,7 +1297,7 @@
     },
     {
       "path": "client/frontend/src/utils/request.js",
-      "sha256": "e51c69b9eee84851c089d33a90efd377964900cc6e010bfcdcd4fcf01070e0d9"
+      "sha256": "d02c29e8fb7cf7bea4cee650ee0a0e4240fc5a119902a9f4e2bf5fa3bae54222"
     },
     {
       "path": "client/frontend/src/utils/resourceFilters.js",
@@ -1421,7 +1421,7 @@
     },
     {
       "path": "client/frontend/src/views/Login/index.vue",
-      "sha256": "3d8eda6d0c7d5c7cc10a4304b01ce5590e43c3b05194cef3d41061c76c7f1ec7"
+      "sha256": "7cd7953e0ab7f78d520fd3def44a6acf020c02f5303e823de2c6be81e24353b5"
     },
     {
       "path": "client/frontend/src/views/Navigation/index.vue",
@@ -1437,11 +1437,11 @@
     },
     {
       "path": "client/frontend/src/views/Ports/components/ProtocolPortTable.vue",
-      "sha256": "740ce39c6200b749bbe66dc1fcfa9a28a05790ccc28ab91b7c927ece85345973"
+      "sha256": "3e4466f2cb331b9152c7b8823ec8aa86d19cbd0fadcbbf78126be78712f6b503"
     },
     {
       "path": "client/frontend/src/views/Ports/index.vue",
-      "sha256": "68bc98852af24d15479c67934903a1db25a9e7036a6f1def0acd411b0a9c7db9"
+      "sha256": "b138d48ae41243feea89eb32ca0209351cfc3b8f52cd2b1c36e1cd55c6abda14"
     },
     {
       "path": "client/frontend/src/views/ScheduledTasks/index.vue",
@@ -1457,7 +1457,7 @@
     },
     {
       "path": "client/frontend/src/views/Settings/index.vue",
-      "sha256": "dbe0a8e7f046fdc2fe7fccf3eae823a116382cb54689df786854dda06c954355"
+      "sha256": "029be5bf43ce264ecfd1f27ce5a4ec2fa4f41c76eb7dcda535d6ef1a4e742136"
     },
     {
       "path": "client/frontend/src/views/Settings/nasProfile.js",
@@ -1469,7 +1469,7 @@
     },
     {
       "path": "client/frontend/src/views/Settings/settingsSections.js",
-      "sha256": "b9aee581cb89f418c346864f9462e0ad8a6de974fc4710ed938b321671aec442"
+      "sha256": "2803837701ae7164750ea70d2899f8aff04e93e3abdfa374175347160438f8c6"
     },
     {
       "path": "client/frontend/src/views/Tutorials/index.vue",

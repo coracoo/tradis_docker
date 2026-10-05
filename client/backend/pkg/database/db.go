@@ -362,7 +362,9 @@ func createTables() error {
 	if err = initAdminUser(); err != nil {
 		log.Printf("警告: 初始化管理员账户失败: %v", err)
 	}
-	_ = maybeResetAdminPassword()
+	if err := maybeResetAdminPassword(); err != nil {
+		log.Printf("警告: 重置管理员密码失败: %v", err)
+	}
 
 	// 创建注册表配置表
 	_, err = db.Exec(`
@@ -1538,7 +1540,8 @@ func MarkImageUpdatesNotifiedByRepoTags(repoTags []string) error {
 // initAdminUser 初始化管理员账户
 func initAdminUser() error {
 	var count int
-	err := db.QueryRow("SELECT COUNT(*) FROM users WHERE username = 'admin'").Scan(&count)
+	// The administrator can rename their account; only bootstrap an empty table.
+	err := db.QueryRow("SELECT COUNT(*) FROM users").Scan(&count)
 	if err != nil {
 		return err
 	}
@@ -1580,8 +1583,18 @@ func maybeResetAdminPassword() error {
 	if err != nil {
 		return err
 	}
-	_, err = db.Exec("UPDATE users SET password = ?, token_version = token_version + 1, updated_at = CURRENT_TIMESTAMP WHERE username = 'admin'", string(hash))
-	return err
+	result, err := db.Exec(adminPasswordUpdateSQL, string(hash))
+	if err != nil {
+		return err
+	}
+	affected, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if affected != 1 {
+		return fmt.Errorf("administrator account is missing or ambiguous")
+	}
+	return nil
 }
 func GetDB() *sql.DB {
 	return db

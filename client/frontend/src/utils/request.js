@@ -5,7 +5,7 @@ import { applyEnvironmentHeaders, publishEnvironmentResponse } from '@edition/re
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || ''
 const BASE_URL = API_BASE_URL ? `${API_BASE_URL}/api` : '/api'
 
-// 401 跳转去重：多个并发请求同时收到 401 时只跳转一次，避免重复 location.href 造成跳转风暴。
+// 受保护请求的 401 跳转去重；登录失败由登录页展示，不触发整页导航。
 let isRedirectingTo401 = false
 const DEFAULT_REQUEST_TIMEOUT_MS = 120_000
 
@@ -116,10 +116,10 @@ async function request(url, options = {}) {
 				details: data?.details ?? null,
 				payload: data
 			})
-			if (response.status === 401) {
+			if (response.status === 401 && url.split('?', 1)[0] !== '/auth/login') {
 				localStorage.removeItem('loggedIn')
 				localStorage.removeItem('token')
-				if (!isRedirectingTo401) {
+				if (!isRedirectingTo401 && window.location.pathname !== '/login') {
 					isRedirectingTo401 = true
 					window.location.href = '/login'
 				}

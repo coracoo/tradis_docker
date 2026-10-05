@@ -7,7 +7,7 @@ services:
       context: .
       dockerfile: Dockerfile.community
       args:
-        CLIENT_VERSION: v0.9.7 # x-release-please-version
+        CLIENT_VERSION: v0.9.8 # x-release-please-version
     container_name: tradis-community
     restart: unless-stopped
     network_mode: host

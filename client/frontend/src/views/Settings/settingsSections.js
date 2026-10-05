@@ -11,7 +11,7 @@ const fullEdition = __TRADIS_EDITION__ === 'full'
 
 export const settingSections = [
   { key: 'appearance', category: 'general', column: 'left', elementId: 'appearance-settings', label: '外观设置', keywords: '主题色 暗色模式 图标风格 lucide tabler' },
-  { key: 'security', category: 'general', column: 'left', elementId: 'security-settings', label: '安全设置', keywords: '管理员 密码 安全' },
+  { key: 'security', category: 'general', column: 'left', elementId: 'security-settings', label: '安全设置', keywords: '管理员 账号 用户名 密码 安全' },
   { key: 'onboarding', category: 'general', column: 'left', elementId: 'onboarding-settings', label: '新手引导', keywords: '新手 引导 巡游 入门 onboarding' },
   { key: 'advanced', category: 'general', column: 'right', elementId: 'advanced-settings', label: '高级选项', keywords: '高级模式 yaml 编辑' },
   { key: 'diagnostics', category: 'general', column: 'right', elementId: 'diagnostics-settings', label: '系统诊断', keywords: '诊断包 排障 导出 docker 任务 事件' },

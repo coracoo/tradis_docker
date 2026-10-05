@@ -58,7 +58,7 @@ var communityAllowedSettingsFields = map[string]struct{}{
 
 // DefaultClientVersion is written through ldflags by image builds. The source
 // value keeps local community builds identifiable without an official service.
-var DefaultClientVersion = "v0.9.7" // x-release-please-version
+var DefaultClientVersion = "v0.9.8" // x-release-please-version
 
 const (
 	kvClientVersionKey     = "client_version"

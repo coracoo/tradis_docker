@@ -4,15 +4,21 @@ import (
 	"database/sql"
 	"dockerpanel/backend/pkg/config"
 	"dockerpanel/backend/pkg/database"
+	"encoding/json"
+	"errors"
 	"log"
 	"net/http"
 	"os"
 	"strings"
 	"sync"
 	"time"
+	"unicode"
+	"unicode/utf8"
 
 	"github.com/gin-gonic/gin"
+	"github.com/gin-gonic/gin/binding"
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/mattn/go-sqlite3"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -61,6 +67,11 @@ type UpdatePasswordRequest struct {
 	NewPassword string `json:"newPassword" binding:"required"`
 }
 
+type UpdateUsernameRequest struct {
+	NewUsername     string `json:"newUsername" binding:"required"`
+	CurrentPassword string `json:"currentPassword" binding:"required"`
+}
+
 // isSecureConnection 判断当前请求是否通过 HTTPS（含反向代理场景）
 func isSecureConnection(c *gin.Context) bool {
 	if c.Request.TLS != nil {
@@ -77,6 +88,7 @@ func RegisterAuthRoutes(r *gin.Engine) {
 	{
 		authGroup.POST("/logout", logout)
 		authGroup.POST("/change-password", changePassword)
+		authGroup.POST("/change-username", changeUsername)
 		authGroup.GET("/me", getCurrentUser)
 	}
 }
@@ -125,8 +137,8 @@ func login(c *gin.Context) {
 
 	db := database.GetDB()
 	var storedPassword string
-	var tokenVersion int
-	err := db.QueryRow("SELECT password, token_version FROM users WHERE username = ?", req.Username).Scan(&storedPassword, &tokenVersion)
+	var userID, tokenVersion int
+	err := db.QueryRowContext(c.Request.Context(), "SELECT id, password, token_version FROM users WHERE username = ?", req.Username).Scan(&userID, &storedPassword, &tokenVersion)
 
 	if err == sql.ErrNoRows {
 		respondError(c, http.StatusUnauthorized, "Invalid username or password", nil)
@@ -156,7 +168,7 @@ func login(c *gin.Context) {
 		return
 	}
 
-	tokenString, err := issueClientToken(req.Username, tokenVersion)
+	tokenString, err := issueClientToken(userID, req.Username, tokenVersion)
 	if err != nil {
 		respondError(c, http.StatusInternalServerError, "Could not generate token", err)
 		return
@@ -189,11 +201,19 @@ func changePassword(c *gin.Context) {
 	}
 
 	username := c.GetString("username")
+	userID := c.GetInt("user_id")
 	db := database.GetDB()
 
 	var currentPassword string
 	var tokenVersion int
-	err := db.QueryRow("SELECT password, token_version FROM users WHERE username = ?", username).Scan(&currentPassword, &tokenVersion)
+	err := db.QueryRowContext(c.Request.Context(),
+		"SELECT password, token_version FROM users WHERE id = ? AND username = ? AND token_version = ?",
+		userID, username, c.GetInt("token_version"),
+	).Scan(&currentPassword, &tokenVersion)
+	if err == sql.ErrNoRows {
+		respondError(c, http.StatusConflict, "Account changed concurrently, please sign in again", nil)
+		return
+	}
 	if err != nil {
 		respondError(c, http.StatusInternalServerError, "Database error", err)
 		return
@@ -211,9 +231,9 @@ func changePassword(c *gin.Context) {
 		respondError(c, http.StatusInternalServerError, "Failed to hash new password", herr)
 		return
 	}
-	result, err := db.Exec(
-		"UPDATE users SET password = ?, token_version = token_version + 1, updated_at = CURRENT_TIMESTAMP WHERE username = ? AND password = ? AND token_version = ?",
-		string(newHash), username, currentPassword, tokenVersion,
+	result, err := db.ExecContext(c.Request.Context(),
+		"UPDATE users SET password = ?, token_version = token_version + 1, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND username = ? AND password = ? AND token_version = ?",
+		string(newHash), userID, username, currentPassword, tokenVersion,
 	)
 	if err != nil {
 		respondError(c, http.StatusInternalServerError, "Failed to update password", err)
@@ -224,7 +244,7 @@ func changePassword(c *gin.Context) {
 		return
 	}
 
-	tokenString, err := issueClientToken(username, tokenVersion+1)
+	tokenString, err := issueClientToken(userID, username, tokenVersion+1)
 	if err != nil {
 		respondError(c, http.StatusInternalServerError, "Could not generate token", err)
 		return
@@ -235,13 +255,104 @@ func changePassword(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "Password updated successfully", "token": tokenString})
 }
 
-func issueClientToken(username string, tokenVersion int) (string, error) {
+func changeUsername(c *gin.Context) {
+	var req UpdateUsernameRequest
+	if err := c.ShouldBindBodyWith(&req, binding.JSON); err != nil {
+		respondError(c, http.StatusBadRequest, "Invalid request", err)
+		return
+	}
+	// encoding/json replaces invalid UTF-8, so validate the original bytes too.
+	body, _ := c.Get(gin.BodyBytesKey)
+	if !utf8.Valid(body.([]byte)) {
+		respondError(c, http.StatusBadRequest, "Username must contain valid UTF-8", nil)
+		return
+	}
+	newUsername := strings.TrimSpace(req.NewUsername)
+	if length := utf8.RuneCountInString(newUsername); length == 0 || length > 64 {
+		respondError(c, http.StatusBadRequest, "Username must contain 1 to 64 characters", nil)
+		return
+	}
+	for _, character := range newUsername {
+		if unicode.IsSpace(character) || unicode.IsControl(character) {
+			respondError(c, http.StatusBadRequest, "Username must not contain whitespace or control characters", nil)
+			return
+		}
+	}
+
+	username := c.GetString("username")
+	if newUsername == username {
+		respondError(c, http.StatusBadRequest, "New username must be different from the current username", nil)
+		return
+	}
+	db := database.GetDB()
+	var userID, tokenVersion int
+	var currentPassword string
+	err := db.QueryRowContext(c.Request.Context(),
+		"SELECT id, password, token_version FROM users WHERE id = ? AND username = ? AND token_version = ?",
+		c.GetInt("user_id"), username, c.GetInt("token_version"),
+	).Scan(&userID, &currentPassword, &tokenVersion)
+	if err == sql.ErrNoRows {
+		respondError(c, http.StatusConflict, "Account changed concurrently, please sign in again", nil)
+		return
+	}
+	if err != nil {
+		respondError(c, http.StatusInternalServerError, "Database error", err)
+		return
+	}
+	if bcrypt.CompareHashAndPassword([]byte(currentPassword), []byte(req.CurrentPassword)) != nil {
+		respondError(c, http.StatusBadRequest, "Current password incorrect", nil)
+		return
+	}
+
+	result, err := db.ExecContext(c.Request.Context(),
+		"UPDATE users SET username = ?, token_version = token_version + 1, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND username = ? AND password = ? AND token_version = ?",
+		newUsername, userID, username, currentPassword, tokenVersion,
+	)
+	if err != nil {
+		var sqliteError sqlite3.Error
+		if errors.As(err, &sqliteError) && sqliteError.ExtendedCode == sqlite3.ErrConstraintUnique {
+			respondError(c, http.StatusConflict, "Username is already in use", nil)
+			return
+		}
+		respondError(c, http.StatusInternalServerError, "Failed to update username", err)
+		return
+	}
+	if affected, affectedErr := result.RowsAffected(); affectedErr != nil || affected != 1 {
+		respondError(c, http.StatusConflict, "Account changed concurrently, please sign in again", affectedErr)
+		return
+	}
+
+	tokenString, err := issueClientToken(userID, newUsername, tokenVersion+1)
+	if err != nil {
+		respondError(c, http.StatusInternalServerError, "Could not generate token", err)
+		return
+	}
+	c.SetSameSite(http.SameSiteStrictMode)
+	c.SetCookie("token", tokenString, 24*3600, "/", "", isSecureConnection(c), true)
+	c.JSON(http.StatusOK, gin.H{"message": "Username updated successfully", "username": newUsername, "token": tokenString})
+}
+
+func issueClientToken(userID int, username string, tokenVersion int) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+		"user_id":       userID,
 		"username":      username,
 		"token_version": tokenVersion,
 		"exp":           time.Now().Add(24 * time.Hour).Unix(),
 	})
 	return token.SignedString(jwtSecret)
+}
+
+func positiveTokenInteger(claim any) (int, bool) {
+	number, ok := claim.(json.Number)
+	if !ok {
+		return 0, false
+	}
+	value, err := number.Int64()
+	if err != nil || value <= 0 {
+		return 0, false
+	}
+	integer := int(value)
+	return integer, int64(integer) == value
 }
 
 func getCurrentUser(c *gin.Context) {
@@ -275,7 +386,7 @@ func AuthMiddleware() gin.HandlerFunc {
 				return nil, jwt.ErrSignatureInvalid
 			}
 			return jwtSecret, nil
-		})
+		}, jwt.WithJSONNumber())
 
 		if err != nil || !token.Valid {
 			respondError(c, http.StatusUnauthorized, "Invalid token", nil)
@@ -296,20 +407,28 @@ func AuthMiddleware() gin.HandlerFunc {
 			c.Abort()
 			return
 		}
-		tokenVersionFloat, ok := claims["token_version"].(float64)
+		userID, ok := positiveTokenInteger(claims["user_id"])
+		if !ok {
+			respondError(c, http.StatusUnauthorized, "Session expired, please sign in again", nil)
+			c.Abort()
+			return
+		}
+		tokenVersion, ok := positiveTokenInteger(claims["token_version"])
 		if !ok {
 			respondError(c, http.StatusUnauthorized, "Session expired, please sign in again", nil)
 			c.Abort()
 			return
 		}
 		var currentTokenVersion int
-		if err := database.GetDB().QueryRow("SELECT token_version FROM users WHERE username = ?", username).Scan(&currentTokenVersion); err != nil || currentTokenVersion != int(tokenVersionFloat) {
+		if err := database.GetDB().QueryRowContext(c.Request.Context(), "SELECT token_version FROM users WHERE id = ? AND username = ?", userID, username).Scan(&currentTokenVersion); err != nil || currentTokenVersion != tokenVersion {
 			respondError(c, http.StatusUnauthorized, "Session expired, please sign in again", nil)
 			c.Abort()
 			return
 		}
 
 		c.Set("username", username)
+		c.Set("user_id", userID)
+		c.Set("token_version", currentTokenVersion)
 		c.Next()
 	}
 }
