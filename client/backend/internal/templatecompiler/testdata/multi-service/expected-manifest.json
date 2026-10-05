@@ -1,0 +1,23 @@
+{
+  "manifest_version": 1,
+  "compiler_version": "1.0.1",
+  "source_digest": "sha256:fixture",
+  "manifest_digest": "sha256:fixture",
+  "services": ["api", "worker"],
+  "inputs": [
+    {
+      "id": "project:POSTGRES_PASSWORD",
+      "key": "POSTGRES_PASSWORD",
+      "kind": "env",
+      "scope": "project",
+      "required": true,
+      "sensitive": true
+    }
+  ],
+  "bindings": [],
+  "mappings": [],
+  "fixed_values": [],
+  "opaque_nodes": [],
+  "diagnostics": [],
+  "complete": true
+}

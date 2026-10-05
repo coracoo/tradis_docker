@@ -1,0 +1,98 @@
+name: release
+
+on:
+  push:
+    tags: ['v*']
+
+concurrency:
+  group: community-release
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    uses: ./.github/workflows/test.yml
+  image:
+    needs: verify
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install release gate dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y jq rsync
+      - name: Validate release candidate and image configuration
+        id: tags
+        env:
+          COMMUNITY_IMAGE: ${{ vars.COMMUNITY_IMAGE }}
+        run: |
+          bash scripts/check-community-release.sh "$PWD" "$GITHUB_REF_NAME"
+          [[ "$COMMUNITY_IMAGE" =~ ^[a-z0-9]+([._-][a-z0-9]+)*/[a-z0-9]+([._-][a-z0-9]+)*$ ]] || { echo 'Set repository variable COMMUNITY_IMAGE to Docker Hub owner/image'; exit 1; }
+          echo "image=$COMMUNITY_IMAGE" >> "$GITHUB_OUTPUT"
+          echo "version=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+      - name: Preserve completed releases on rerun
+        id: existing
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          published=false
+          found=false
+          if gh api "repos/$GITHUB_REPOSITORY/releases/tags/$GITHUB_REF_NAME" > existing-release.json 2> existing-release-error.txt; then
+            jq -e --arg tag "$GITHUB_REF_NAME" '.tag_name == $tag and (.draft | type == "boolean")' existing-release.json >/dev/null
+            found=true
+            if [[ "$(jq -r '.draft' existing-release.json)" == false ]]; then published=true; fi
+          elif ! grep -Fq 'HTTP 404' existing-release-error.txt; then
+            cat existing-release-error.txt >&2
+            exit 1
+          fi
+          echo "published=$published" >> "$GITHUB_OUTPUT"
+          echo "found=$found" >> "$GITHUB_OUTPUT"
+      - uses: docker/setup-qemu-action@v3
+        if: steps.existing.outputs.published != 'true'
+      - uses: docker/setup-buildx-action@v3
+        if: steps.existing.outputs.published != 'true'
+      - uses: docker/login-action@v3
+        if: steps.existing.outputs.published != 'true'
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - uses: docker/build-push-action@v6
+        id: build
+        if: steps.existing.outputs.published != 'true'
+        with:
+          context: client
+          file: client/Dockerfile.community
+          push: true
+          platforms: linux/amd64,linux/arm64
+          build-args: |
+            CLIENT_VERSION=v${{ steps.tags.outputs.version }}
+          labels: |
+            org.opencontainers.image.licenses=AGPL-3.0-only
+            org.opencontainers.image.source=https://github.com/${{ github.repository }}
+            org.opencontainers.image.revision=${{ github.sha }}
+          tags: |
+            ${{ steps.tags.outputs.image }}:${{ steps.tags.outputs.version }}
+      - name: Create release with digest
+        if: steps.existing.outputs.published != 'true'
+        run: |
+          set -euo pipefail
+          [[ "$DIGEST" =~ ^sha256:[0-9a-f]{64}$ ]]
+          jq --arg version "$GITHUB_REF_NAME" --arg image "$IMAGE" --arg digest "$DIGEST" \
+            '{edition:"tradis-community", version:$version, sourceCommit:.source.commit, image:$image, digest:$digest, platforms:["linux/amd64","linux/arm64"]}' \
+            .community-export-manifest.json > community-release.json
+          printf 'Community 镜像：%s@%s\n\n仅手动更新，安装与源码构建步骤见 README。\n' "$IMAGE" "$DIGEST" > release-notes.txt
+          if [[ "$FOUND" != true ]]; then
+            gh release create "$GITHUB_REF_NAME" --verify-tag --draft --title "TRADIS Community $GITHUB_REF_NAME" --notes-file release-notes.txt
+          fi
+          gh release upload "$GITHUB_REF_NAME" community-release.json client/docker-compose.community.yml client/.env.community.example --clobber
+          gh release edit "$GITHUB_REF_NAME" --notes-file release-notes.txt --draft=false
+        env:
+          GH_TOKEN: ${{ github.token }}
+          IMAGE: ${{ steps.tags.outputs.image }}
+          DIGEST: ${{ steps.build.outputs.digest }}
+          FOUND: ${{ steps.existing.outputs.found }}

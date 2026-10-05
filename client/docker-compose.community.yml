@@ -1,0 +1,44 @@
+# Community 候选只使用此 Compose 相对目录下独立的 ./data；不要挂载私有 Full / Go 的数据目录。
+services:
+  tradis-community:
+    image: ${TRADIS_COMMUNITY_IMAGE:?请设置发布页提供的 Community 镜像和 digest}
+    container_name: tradis-community
+    restart: unless-stopped
+    env_file:
+      - ${TRADIS_COMMUNITY_ENV_FILE:-.env}
+    environment:
+      BACKEND_PORT: 8080
+      # 生产默认 release：未提供 ADMIN_PASSWORD 时后端直接拒绝启动，不回落开发默认口令。
+      GIN_MODE: ${GIN_MODE:-release}
+      JWT_SECRET: ${JWT_SECRET:?请在 .env 设置 JWT_SECRET（至少 32 字符随机值）}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:?请在 .env 设置管理员初始密码}
+      PROJECT_ROOT: ${PROJECT_ROOT:?请在 .env 中配置宿主机 Compose 项目绝对路径}
+      BACKUP_ROOT: ${BACKUP_ROOT:-${PWD}/data/backups}
+      APPSTORE_CDN_URL: ${APPSTORE_CDN_URL:-}
+      CLOUDFLARE_SPEED_TEST: ${CLOUDFLARE_SPEED_TEST:-false}
+    ports:
+      - "${TRADIS_PORT:-8080}:8080"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./data:/app/client/backend/data
+      - ${PROJECT_ROOT:?请在 .env 中配置宿主机 Compose 项目绝对路径}:/app/client/backend/project
+      - ${PROJECT_ROOT:?请在 .env 中配置宿主机 Compose 项目绝对路径}:${PROJECT_ROOT:?请在 .env 中配置宿主机 Compose 项目绝对路径}
+      - ${BACKUP_ROOT:-${PWD}/data/backups}:${BACKUP_ROOT:-${PWD}/data/backups}
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    cap_add:
+      - CHOWN
+      - SETGID
+      - SETUID
+      - KILL
+      - DAC_OVERRIDE
+    healthcheck:
+      test: ["CMD-SHELL", "nc -z 127.0.0.1 8080"]
+      interval: 30s
+      timeout: 5s
+      start_period: 30s
+      retries: 3

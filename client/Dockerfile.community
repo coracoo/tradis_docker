@@ -1,0 +1,75 @@
+FROM golang:1.23-alpine AS backend-builder
+
+# 可选构建加速镜像源：默认保持官方源；国内网络可注入
+# --build-arg APK_MIRROR=https://mirrors.tuna.tsinghua.edu.cn/alpine
+# --build-arg GOPROXY=https://goproxy.cn,direct
+ARG APK_MIRROR=""
+RUN if [ -n "$APK_MIRROR" ]; then sed -i "s|https://dl-cdn.alpinelinux.org/alpine|${APK_MIRROR}|g; s|https://dl-cdn.alpinelinux.org|${APK_MIRROR}|g" /etc/apk/repositories; fi \
+    && apk add --no-cache build-base sqlite-dev
+ARG GOPROXY=""
+ENV CGO_ENABLED=1
+WORKDIR /app/backend
+
+ARG CLIENT_VERSION="v0.9.7" # x-release-please-version
+COPY backend/go.mod backend/go.sum ./
+RUN go mod download
+COPY backend ./
+RUN go build -tags community -ldflags="-s -w -X dockerpanel/backend/api.DefaultClientVersion=${CLIENT_VERSION}" -o /app/bin/tradis-community ./cmd
+
+FROM --platform=$BUILDPLATFORM node:20-alpine AS frontend-builder
+
+# 同上：可选国内镜像源（npm 用 npmmirror）
+ARG APK_MIRROR=""
+RUN if [ -n "$APK_MIRROR" ]; then sed -i "s|https://dl-cdn.alpinelinux.org/alpine|${APK_MIRROR}|g; s|https://dl-cdn.alpinelinux.org|${APK_MIRROR}|g" /etc/apk/repositories; fi
+ARG NPM_REGISTRY=""
+ENV npm_config_registry=${NPM_REGISTRY}
+# corepack 下载 yarn 二进制走独立的 COREPACK_NPM_REGISTRY，不吃 npm_config_registry
+ENV COREPACK_NPM_REGISTRY=${NPM_REGISTRY}
+WORKDIR /app/client/frontend
+ENV VITE_TRADIS_EDITION=community
+COPY frontend/package.json frontend/yarn.lock ./
+RUN corepack enable && \
+    yarn install --frozen-lockfile --non-interactive && \
+    yarn cache clean
+COPY frontend ./
+RUN npm run build
+
+FROM alpine:3.19
+
+ARG APK_MIRROR=""
+RUN if [ -n "$APK_MIRROR" ]; then sed -i "s|https://dl-cdn.alpinelinux.org/alpine|${APK_MIRROR}|g; s|https://dl-cdn.alpinelinux.org|${APK_MIRROR}|g" /etc/apk/repositories; fi
+
+ENV TZ=Asia/Shanghai
+ENV BACKEND_PORT=8080
+ENV TRADIS_DATA_DIR=/app/client/backend/data
+ENV PROJECT_ROOT=
+ENV APPSTORE_CDN_URL=
+ENV CLOUDFLARE_SPEED_TEST=false
+
+ARG CLIENT_VERSION="v0.9.7" # x-release-please-version
+ENV CLIENT_VERSION=${CLIENT_VERSION}
+
+RUN apk add --no-cache \
+    ca-certificates \
+    docker-cli \
+    docker-cli-compose \
+    git \
+    grep \
+    netcat-openbsd \
+    sqlite-libs \
+    tini \
+    tzdata
+
+WORKDIR /app/client/backend
+COPY --from=backend-builder /app/bin/tradis-community /app/backend/backend
+COPY --from=frontend-builder /app/client/frontend/dist /app/client/backend/dist
+COPY start_community.sh /app/start.sh
+RUN chmod +x /app/start.sh
+
+VOLUME ["/app/client/backend/data"]
+VOLUME ["/var/run/docker.sock"]
+
+HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 CMD sh -c 'nc -z 127.0.0.1 ${BACKEND_PORT:-8080}'
+
+ENTRYPOINT ["/sbin/tini", "-g", "--"]
+CMD ["/bin/sh", "/app/start.sh"]

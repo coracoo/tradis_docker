@@ -1,0 +1,48 @@
+# Git / CI
+.git
+.gitignore
+.gitattributes
+.github
+
+# Editors / OS
+.trae
+.idea
+.vscode
+**/.DS_Store
+
+# Logs / Temp
+**/*.log
+**/*.tmp
+**/*.swp
+**/*.swo
+
+# Frontend build artifacts / deps
+frontend/node_modules
+frontend/dist
+frontend/dist-ssr
+frontend/.vite
+frontend/coverage
+frontend/.cache
+frontend/.pnpm-store
+frontend/*.tsbuildinfo
+
+# Backend build artifacts / runtime
+data/
+backend/data
+backend/project
+backend/dist
+backend/main
+backend/server
+backend/tmp
+backend/wget-log
+
+# Secrets
+**/.env
+**/.env.local
+**/.env.*.local
+
+# Docs / Dev
+*.md
+!README.md
+logs/
+.pids/

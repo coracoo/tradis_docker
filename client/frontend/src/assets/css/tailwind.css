@@ -1,0 +1,1078 @@
+@import "tailwindcss";
+
+/* ============================================
+   TRADIS Design System - Tailwind v4 Theme
+   ============================================ */
+
+@theme {
+  /* 主题色 - 海洋蓝（默认） */
+  --color-primary-50: #eff6ff;
+  --color-primary-100: #dbeafe;
+  --color-primary-200: #bfdbfe;
+  --color-primary-300: #93c5fd;
+  --color-primary-400: #60a5fa;
+  --color-primary-500: #3b82f6;
+  --color-primary-600: #2563eb;
+  --color-primary-700: #1d4ed8;
+  --color-primary-800: #1e40af;
+  --color-primary-900: #1e3a8a;
+  --color-primary-950: #172554;
+
+  /* 中性灰 */
+  --color-gray-50: #f9fafb;
+  --color-gray-100: #f3f4f6;
+  --color-gray-200: #e5e7eb;
+  --color-gray-300: #d1d5db;
+  --color-gray-400: #9ca3af;
+  --color-gray-500: #6b7280;
+  --color-gray-600: #4b5563;
+  --color-gray-700: #374151;
+  --color-gray-800: #1f2937;
+  --color-gray-900: #111827;
+  --color-gray-950: #030712;
+
+  /* 语义化颜色 */
+  --color-success-50: #ecfdf5;
+  --color-success-100: #d1fae5;
+  --color-success-200: #a7f3d0;
+  --color-success-300: #6ee7b7;
+  --color-success-400: #34d399;
+  --color-success-500: #10b981;
+  --color-success-600: #059669;
+  --color-success-700: #047857;
+  --color-success-800: #065f46;
+  --color-success-900: #064e3b;
+  
+  --color-warning-50: #fffbeb;
+  --color-warning-100: #fef3c7;
+  --color-warning-200: #fde68a;
+  --color-warning-300: #fcd34d;
+  --color-warning-400: #fbbf24;
+  --color-warning-500: #f59e0b;
+  --color-warning-600: #d97706;
+  --color-warning-700: #b45309;
+  --color-warning-800: #92400e;
+  --color-warning-900: #78350f;
+  
+  --color-danger-50: #fef2f2;
+  --color-danger-100: #fee2e2;
+  --color-danger-200: #fecaca;
+  --color-danger-300: #fca5a5;
+  --color-danger-400: #f87171;
+  --color-danger-500: #ef4444;
+  --color-danger-600: #dc2626;
+  --color-danger-700: #b91c1c;
+  --color-danger-800: #991b1b;
+  --color-danger-900: #7f1d1d;
+  
+  --color-info-50: #eff6ff;
+  --color-info-100: #dbeafe;
+  --color-info-200: #bfdbfe;
+  --color-info-300: #93c5fd;
+  --color-info-400: #60a5fa;
+  --color-info-500: #3b82f6;
+  --color-info-600: #2563eb;
+  --color-info-700: #1d4ed8;
+  --color-info-800: #1e40af;
+  --color-info-900: #1e3a8a;
+
+  /* 辅助色 - Cyan */
+  --color-secondary-50: #ecfeff;
+  --color-secondary-100: #cffafe;
+  --color-secondary-200: #a5f3fc;
+  --color-secondary-300: #67e8f9;
+  --color-secondary-400: #22d3ee;
+  --color-secondary-500: #06b6d4;
+  --color-secondary-600: #0891b2;
+  --color-secondary-700: #0e7490;
+  --color-secondary-800: #155e75;
+  --color-secondary-900: #164e63;
+  --color-secondary-950: #083344;
+
+  /* 强调色 - Violet */
+  --color-accent-50: #f5f3ff;
+  --color-accent-100: #ede9fe;
+  --color-accent-200: #ddd6fe;
+  --color-accent-300: #c4b5fd;
+  --color-accent-400: #a78bfa;
+  --color-accent-500: #8b5cf6;
+  --color-accent-600: #7c3aed;
+  --color-accent-700: #6d28d9;
+  --color-accent-800: #5b21b6;
+  --color-accent-900: #4c1d95;
+  --color-accent-950: #2e1065;
+
+  /* 背景色 - 引用 CSS 变量 */
+  --color-bg-primary: var(--bg-primary);
+  --color-bg-secondary: var(--bg-secondary);
+  --color-bg-tertiary: var(--bg-tertiary);
+  --color-bg-elevated: var(--bg-elevated);
+
+  /* 文字色 */
+  --color-text-primary: var(--text-primary, #111827);
+  --color-text-secondary: var(--text-secondary, #4b5563);
+  --color-text-tertiary: var(--text-tertiary, #6b7280);
+  --color-text-disabled: var(--text-disabled, #9ca3af);
+  --color-text-inverse: var(--text-inverse, #ffffff);
+
+  /* 边框色 - 引用 CSS 变量 */
+  --color-border-subtle: var(--border-subtle);
+  --color-border-default: var(--border-default);
+  --color-border-strong: var(--border-strong);
+
+  /* 阴影 */
+  --shadow-xs: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+
+  /* 圆角 */
+  --radius-sm: 0.375rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+  --radius-xl: 1rem;
+  --radius-2xl: 1.5rem;
+  --radius-full: 9999px;
+
+  /* 字体 */
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: 'JetBrains Mono', 'Fira Code', ui-monospace, monospace;
+
+  /* 响应式断点 */
+  --breakpoint-xs: 480px;
+  --breakpoint-sm: 640px;
+  --breakpoint-md: 768px;
+  --breakpoint-lg: 1024px;
+  --breakpoint-xl: 1280px;
+  --breakpoint-2xl: 1536px;
+  --breakpoint-3xl: 1920px;
+
+  /* 语义化别名 - 色彩系统 2.0 */
+  --color-highlight-search: rgba(250, 204, 21, 0.4);
+  --ring-primary: var(--color-primary-200);
+  --ring-secondary: var(--color-secondary-200);
+  --ring-accent: var(--color-accent-200);
+}
+
+/* ============================================
+   Light Mode Variables (默认)
+   ============================================ */
+
+:root {
+  --bg-primary: #f8fafc;      /* slate-50，带微蓝调 */
+  --bg-secondary: #f1f5f9;    /* slate-100 */
+  --bg-tertiary: #e2e8f0;     /* slate-200 */
+  --bg-elevated: #ffffff;     /* 纯白 */
+  --bg-hover: #f1f5f9;        /* 悬停背景 */
+  --bg-selected: #e0f2fe;     /* 选中背景 */
+  --bg-focus: #eff6ff;        /* 焦点背景 */
+  --sidebar-bg: rgba(248, 251, 253, 0.92);
+  --sidebar-ink: #132033;
+  --sidebar-muted: #64748b;
+  --sidebar-subtle: #8ba0b6;
+
+  --text-primary: #111827;
+  --text-secondary: #475569;
+  --text-tertiary: #64748b;
+  --text-disabled: #94a3b8;
+  --text-inverse: #ffffff;
+  
+  --border-subtle: #cbd5e1;   /* slate-300 */
+  --border-default: #94a3b8;  /* slate-400 */
+  --border-strong: #64748b;   /* slate-500 */
+  --focus-ring: color-mix(in srgb, var(--color-primary-500) 45%, transparent);
+
+  /* Motion system */
+  --motion-duration-micro: 80ms;
+  --motion-duration-quick: 150ms;
+  --motion-duration-fast: 250ms;
+  --motion-duration-panel: 350ms;
+  --motion-duration-slow: 400ms;
+  --motion-ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --motion-ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --motion-distance-micro: 4px;
+  --motion-distance-small: 8px;
+  --motion-distance-medium: 12px;
+  --motion-scale-enter: 0.97;
+  --motion-scale-pop: 1.08;
+  --motion-tooltip-in: 150ms;
+  --motion-tooltip-out: 50ms;
+  --motion-tooltip-delay: 80ms;
+  --motion-tooltip-scale: 0.98;
+  --motion-duration-stagger: 40ms;
+  --motion-ease-bounce: cubic-bezier(0.34, 1.36, 0.64, 1);
+  --motion-blur-small: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --motion-duration-micro: 1ms;
+    --motion-duration-quick: 1ms;
+    --motion-duration-fast: 1ms;
+    --motion-duration-panel: 1ms;
+    --motion-duration-slow: 1ms;
+    --motion-distance-micro: 0px;
+    --motion-distance-small: 0px;
+    --motion-distance-medium: 0px;
+    --motion-scale-enter: 1;
+    --motion-scale-pop: 1;
+    --motion-tooltip-in: 1ms;
+    --motion-tooltip-out: 1ms;
+    --motion-tooltip-delay: 0ms;
+    --motion-tooltip-scale: 1;
+    --motion-duration-stagger: 1ms;
+    --motion-ease-bounce: var(--motion-ease-out);
+    --motion-blur-small: 0px;
+  }
+}
+
+/* ============================================
+   Dark Mode Variables
+   ============================================ */
+
+html.dark {
+  --bg-primary: #0b1120;      /* 更深的 slate，避免大面积灰白 */
+  --bg-secondary: #111827;
+  --bg-tertiary: #1f2937;
+  --bg-elevated: #172033;
+  --bg-hover: #243149;
+  --bg-selected: color-mix(in srgb, var(--color-primary-500) 18%, var(--bg-elevated));
+  --bg-focus: color-mix(in srgb, var(--color-primary-500) 14%, var(--bg-elevated));
+  --sidebar-bg: rgba(23, 32, 51, 0.92);
+  --sidebar-ink: #f8fafc;
+  --sidebar-muted: #94a3b8;
+  --sidebar-subtle: #64748b;
+
+  --text-primary: #f8fafc;
+  --text-secondary: #cbd5e1;
+  --text-tertiary: #94a3b8;
+  --text-disabled: #64748b;
+  --text-inverse: #0f172a;
+
+  /* 边框 - 深色模式 */
+  --border-subtle: #273449;
+  --border-default: #3d4b63;
+  --border-strong: #64748b;
+  --focus-ring: color-mix(in srgb, var(--color-primary-400) 55%, transparent);
+
+  /* 深色模式下，所有复用 *-50 / *-100 的 hover、active、focus 都必须是暗色表面 tint。 */
+  --color-primary-50: color-mix(in srgb, var(--color-primary-500) 10%, var(--bg-elevated));
+  --color-primary-100: color-mix(in srgb, var(--color-primary-500) 18%, var(--bg-elevated));
+  --color-primary-200: color-mix(in srgb, var(--color-primary-500) 30%, var(--bg-elevated));
+  --color-success-50: color-mix(in srgb, var(--color-success-500) 10%, var(--bg-elevated));
+  --color-success-100: color-mix(in srgb, var(--color-success-500) 18%, var(--bg-elevated));
+  --color-warning-50: color-mix(in srgb, var(--color-warning-500) 10%, var(--bg-elevated));
+  --color-warning-100: color-mix(in srgb, var(--color-warning-500) 18%, var(--bg-elevated));
+  --color-danger-50: color-mix(in srgb, var(--color-danger-500) 10%, var(--bg-elevated));
+  --color-danger-100: color-mix(in srgb, var(--color-danger-500) 18%, var(--bg-elevated));
+  --color-info-50: color-mix(in srgb, var(--color-info-500) 10%, var(--bg-elevated));
+  --color-info-100: color-mix(in srgb, var(--color-info-500) 18%, var(--bg-elevated));
+}
+
+/* ============================================
+   Theme Color Variants
+   ============================================ */
+
+[data-theme="violet"] {
+  --color-primary-500: #8b5cf6;
+  --color-primary-600: #7c3aed;
+  --color-primary-700: #6d28d9;
+}
+
+[data-theme="forest"] {
+  --color-primary-500: #10b981;
+  --color-primary-600: #059669;
+  --color-primary-700: #047857;
+}
+
+[data-theme="amber"] {
+  --color-primary-500: #f59e0b;
+  --color-primary-600: #d97706;
+  --color-primary-700: #b45309;
+}
+
+[data-theme="periwinkle"] {
+  --color-primary-500: #6667ab;
+  --color-primary-600: #54548c;
+  --color-primary-700: #434471;
+}
+
+[data-theme="magenta"] {
+  --color-primary-500: #be3455;
+  --color-primary-600: #9c2b46;
+  --color-primary-700: #7d2238;
+}
+
+[data-theme="marsala"] {
+  --color-primary-500: #955251;
+  --color-primary-600: #7a4342;
+  --color-primary-700: #623635;
+}
+
+[data-theme="mocha"] {
+  --color-primary-500: #a47764;
+  --color-primary-600: #866252;
+  --color-primary-700: #6c4f42;
+}
+
+[data-theme="orchid"] {
+  --color-primary-500: #b565a7;
+  --color-primary-600: #945389;
+  --color-primary-700: #77436e;
+}
+
+[data-theme="ultraviolet"] {
+  --color-primary-500: #5f4b8b;
+  --color-primary-600: #4e3e72;
+  --color-primary-700: #3f325c;
+}
+
+[data-theme="tangerine"] {
+  --color-primary-500: #f05442;
+  --color-primary-600: #c54536;
+  --color-primary-700: #9e372c;
+}
+
+/* ============================================
+   Color-Mix Transparency System (方案1)
+   ============================================ */
+
+/* 使用 CSS color-mix 创建主题感知的透明度变量 */
+@supports (color: color-mix(in srgb, red, blue)) {
+  :root {
+    /* 主题色透明度 - 自动跟随当前主题 */
+    --color-primary-500-5: color-mix(in srgb, var(--color-primary-500) 5%, transparent);
+    --color-primary-500-10: color-mix(in srgb, var(--color-primary-500) 10%, transparent);
+    --color-primary-500-15: color-mix(in srgb, var(--color-primary-500) 15%, transparent);
+    --color-primary-500-20: color-mix(in srgb, var(--color-primary-500) 20%, transparent);
+    --color-primary-500-30: color-mix(in srgb, var(--color-primary-500) 30%, transparent);
+    
+    /* 成功色透明度 */
+    --color-success-500-10: color-mix(in srgb, var(--color-success-500) 10%, transparent);
+    --color-success-500-15: color-mix(in srgb, var(--color-success-500) 15%, transparent);
+    --color-success-500-20: color-mix(in srgb, var(--color-success-500) 20%, transparent);
+    --color-success-ring: color-mix(in srgb, var(--color-success-500) 20%, transparent);
+    
+    /* 警告色透明度 */
+    --color-warning-500-10: color-mix(in srgb, var(--color-warning-500) 10%, transparent);
+    --color-warning-500-15: color-mix(in srgb, var(--color-warning-500) 15%, transparent);
+    --color-warning-500-20: color-mix(in srgb, var(--color-warning-500) 20%, transparent);
+    --color-warning-500-30: color-mix(in srgb, var(--color-warning-500) 30%, transparent);
+    
+    /* 危险色透明度 */
+    --color-danger-500-10: color-mix(in srgb, var(--color-danger-500) 10%, transparent);
+    --color-danger-500-15: color-mix(in srgb, var(--color-danger-500) 15%, transparent);
+    --color-danger-500-20: color-mix(in srgb, var(--color-danger-500) 20%, transparent);
+    --color-danger-ring: color-mix(in srgb, var(--color-danger-500) 20%, transparent);
+    
+    /* 中性色透明度 */
+    --color-gray-500-10: color-mix(in srgb, var(--color-gray-500) 10%, transparent);
+    --color-gray-500-20: color-mix(in srgb, var(--color-gray-500) 20%, transparent);
+    
+    /* 信息色透明度 */
+    --color-info-500-10: color-mix(in srgb, var(--color-info-500) 10%, transparent);
+    --color-info-500-15: color-mix(in srgb, var(--color-info-500) 15%, transparent);
+    --color-info-500-20: color-mix(in srgb, var(--color-info-500) 20%, transparent);
+    
+    /* 语义化变量 - 推荐使用 */
+    --ring-primary: var(--color-primary-500-10);
+    --ring-success: var(--color-success-500-20);
+    --ring-danger: var(--color-danger-500-20);
+    --ring-warning: var(--color-warning-500-15);
+    --shadow-primary: var(--color-primary-500-15);
+    
+    /* 遮罩层透明度 */
+    --backdrop-bg: color-mix(in srgb, var(--bg-primary) 50%, transparent);
+    --overlay-bg: color-mix(in srgb, #000000 50%, transparent);
+    
+    /* 白色透明度 - 主要用于深色模式 */
+    --white-5: color-mix(in srgb, #ffffff 5%, transparent);
+    --white-8: color-mix(in srgb, #ffffff 8%, transparent);
+    --white-10: color-mix(in srgb, #ffffff 10%, transparent);
+    --white-15: color-mix(in srgb, #ffffff 15%, transparent);
+    --white-20: color-mix(in srgb, #ffffff 20%, transparent);
+    --white-30: color-mix(in srgb, #ffffff 30%, transparent);
+    
+    /* 语义化白色透明度 */
+    --surface-white: var(--white-10);
+    --border-white: var(--white-15);
+    --hover-white: var(--white-5);
+  }
+  
+  /* 深色模式调整 */
+  html.dark {
+    --backdrop-bg: color-mix(in srgb, #000000 70%, transparent);
+    --overlay-bg: color-mix(in srgb, #000000 70%, transparent);
+  }
+}
+
+/* 回退方案 - 不支持 color-mix 的浏览器使用预设值 */
+@supports not (color: color-mix(in srgb, red, blue)) {
+  :root {
+    /* Ocean 主题 (默认) */
+    --color-primary-500-5: rgba(59, 130, 246, 0.05);
+    --color-primary-500-10: rgba(59, 130, 246, 0.1);
+    --color-primary-500-15: rgba(59, 130, 246, 0.15);
+    --color-primary-500-20: rgba(59, 130, 246, 0.2);
+    --color-primary-500-30: rgba(59, 130, 246, 0.3);
+    
+    --color-success-500-10: rgba(16, 185, 129, 0.1);
+    --color-success-500-15: rgba(16, 185, 129, 0.15);
+    --color-success-500-20: rgba(16, 185, 129, 0.2);
+    --color-success-ring: rgba(16, 185, 129, 0.2);
+    
+    --color-warning-500-10: rgba(245, 158, 11, 0.1);
+    --color-warning-500-15: rgba(245, 158, 11, 0.15);
+    
+    --color-danger-500-10: rgba(239, 68, 68, 0.1);
+    --color-danger-500-15: rgba(239, 68, 68, 0.15);
+    --color-danger-500-20: rgba(239, 68, 68, 0.2);
+    --color-danger-ring: rgba(239, 68, 68, 0.2);
+    
+    --color-gray-500-10: rgba(107, 114, 128, 0.1);
+    --color-gray-500-20: rgba(107, 114, 128, 0.2);
+    
+    --color-info-500-10: rgba(59, 130, 246, 0.1);
+    --color-info-500-15: rgba(59, 130, 246, 0.15);
+    --color-info-500-20: rgba(59, 130, 246, 0.2);
+    
+    --ring-primary: rgba(59, 130, 246, 0.1);
+    --ring-success: rgba(16, 185, 129, 0.2);
+    --ring-danger: rgba(239, 68, 68, 0.2);
+    --ring-warning: rgba(245, 158, 11, 0.15);
+    --shadow-primary: rgba(59, 130, 246, 0.15);
+    
+    --backdrop-bg: rgba(255, 255, 255, 0.5);
+    --overlay-bg: rgba(0, 0, 0, 0.5);
+    
+    /* 白色透明度 - 回退方案 */
+    --white-5: rgba(255, 255, 255, 0.05);
+    --white-8: rgba(255, 255, 255, 0.08);
+    --white-10: rgba(255, 255, 255, 0.1);
+    --white-15: rgba(255, 255, 255, 0.15);
+    --white-20: rgba(255, 255, 255, 0.2);
+    --white-30: rgba(255, 255, 255, 0.3);
+    --surface-white: rgba(255, 255, 255, 0.1);
+    --border-white: rgba(255, 255, 255, 0.15);
+    --hover-white: rgba(255, 255, 255, 0.05);
+  }
+  
+  /* Violet 主题 */
+  [data-theme="violet"] {
+    --color-primary-500-5: rgba(139, 92, 246, 0.05);
+    --color-primary-500-10: rgba(139, 92, 246, 0.1);
+    --color-primary-500-15: rgba(139, 92, 246, 0.15);
+    --color-primary-500-20: rgba(139, 92, 246, 0.2);
+    --color-primary-500-30: rgba(139, 92, 246, 0.3);
+    --ring-primary: rgba(139, 92, 246, 0.1);
+    --shadow-primary: rgba(139, 92, 246, 0.15);
+  }
+  
+  /* Forest 主题 */
+  [data-theme="forest"] {
+    --color-primary-500-5: rgba(16, 185, 129, 0.05);
+    --color-primary-500-10: rgba(16, 185, 129, 0.1);
+    --color-primary-500-15: rgba(16, 185, 129, 0.15);
+    --color-primary-500-20: rgba(16, 185, 129, 0.2);
+    --color-primary-500-30: rgba(16, 185, 129, 0.3);
+    --ring-primary: rgba(16, 185, 129, 0.1);
+    --shadow-primary: rgba(16, 185, 129, 0.15);
+  }
+  
+  /* Amber 主题 */
+  [data-theme="amber"] {
+    --color-primary-500-5: rgba(245, 158, 11, 0.05);
+    --color-primary-500-10: rgba(245, 158, 11, 0.1);
+    --color-primary-500-15: rgba(245, 158, 11, 0.15);
+    --color-primary-500-20: rgba(245, 158, 11, 0.2);
+    --color-primary-500-30: rgba(245, 158, 11, 0.3);
+    --ring-primary: rgba(245, 158, 11, 0.1);
+    --shadow-primary: rgba(245, 158, 11, 0.15);
+  }
+
+  /* Periwinkle 主题（Pantone Very Peri 2022） */
+  [data-theme="periwinkle"] {
+    --color-primary-500-5: rgba(102, 103, 171, 0.05);
+    --color-primary-500-10: rgba(102, 103, 171, 0.1);
+    --color-primary-500-15: rgba(102, 103, 171, 0.15);
+    --color-primary-500-20: rgba(102, 103, 171, 0.2);
+    --color-primary-500-30: rgba(102, 103, 171, 0.3);
+    --ring-primary: rgba(102, 103, 171, 0.1);
+    --shadow-primary: rgba(102, 103, 171, 0.15);
+  }
+
+  /* Magenta 主题（Pantone Viva Magenta 2023） */
+  [data-theme="magenta"] {
+    --color-primary-500-5: rgba(190, 52, 85, 0.05);
+    --color-primary-500-10: rgba(190, 52, 85, 0.1);
+    --color-primary-500-15: rgba(190, 52, 85, 0.15);
+    --color-primary-500-20: rgba(190, 52, 85, 0.2);
+    --color-primary-500-30: rgba(190, 52, 85, 0.3);
+    --ring-primary: rgba(190, 52, 85, 0.1);
+    --shadow-primary: rgba(190, 52, 85, 0.15);
+  }
+
+  /* Marsala 主题（Pantone Marsala 2015） */
+  [data-theme="marsala"] {
+    --color-primary-500-5: rgba(149, 82, 81, 0.05);
+    --color-primary-500-10: rgba(149, 82, 81, 0.1);
+    --color-primary-500-15: rgba(149, 82, 81, 0.15);
+    --color-primary-500-20: rgba(149, 82, 81, 0.2);
+    --color-primary-500-30: rgba(149, 82, 81, 0.3);
+    --ring-primary: rgba(149, 82, 81, 0.1);
+    --shadow-primary: rgba(149, 82, 81, 0.15);
+  }
+
+  /* Mocha 主题（Pantone Mocha Mousse 2025） */
+  [data-theme="mocha"] {
+    --color-primary-500-5: rgba(164, 119, 100, 0.05);
+    --color-primary-500-10: rgba(164, 119, 100, 0.1);
+    --color-primary-500-15: rgba(164, 119, 100, 0.15);
+    --color-primary-500-20: rgba(164, 119, 100, 0.2);
+    --color-primary-500-30: rgba(164, 119, 100, 0.3);
+    --ring-primary: rgba(164, 119, 100, 0.1);
+    --shadow-primary: rgba(164, 119, 100, 0.15);
+  }
+
+  /* Orchid 主题（Pantone Radiant Orchid 2014） */
+  [data-theme="orchid"] {
+    --color-primary-500-5: rgba(181, 101, 167, 0.05);
+    --color-primary-500-10: rgba(181, 101, 167, 0.1);
+    --color-primary-500-15: rgba(181, 101, 167, 0.15);
+    --color-primary-500-20: rgba(181, 101, 167, 0.2);
+    --color-primary-500-30: rgba(181, 101, 167, 0.3);
+    --ring-primary: rgba(181, 101, 167, 0.1);
+    --shadow-primary: rgba(181, 101, 167, 0.15);
+  }
+
+  /* Ultraviolet 主题（Pantone Ultra Violet 2018） */
+  [data-theme="ultraviolet"] {
+    --color-primary-500-5: rgba(95, 75, 139, 0.05);
+    --color-primary-500-10: rgba(95, 75, 139, 0.1);
+    --color-primary-500-15: rgba(95, 75, 139, 0.15);
+    --color-primary-500-20: rgba(95, 75, 139, 0.2);
+    --color-primary-500-30: rgba(95, 75, 139, 0.3);
+    --ring-primary: rgba(95, 75, 139, 0.1);
+    --shadow-primary: rgba(95, 75, 139, 0.15);
+  }
+
+  /* Tangerine 主题（Pantone Tangerine Tango 2012） */
+  [data-theme="tangerine"] {
+    --color-primary-500-5: rgba(240, 84, 66, 0.05);
+    --color-primary-500-10: rgba(240, 84, 66, 0.1);
+    --color-primary-500-15: rgba(240, 84, 66, 0.15);
+    --color-primary-500-20: rgba(240, 84, 66, 0.2);
+    --color-primary-500-30: rgba(240, 84, 66, 0.3);
+    --ring-primary: rgba(240, 84, 66, 0.1);
+    --shadow-primary: rgba(240, 84, 66, 0.15);
+  }
+  
+  html.dark {
+    --backdrop-bg: rgba(0, 0, 0, 0.7);
+    --overlay-bg: rgba(0, 0, 0, 0.7);
+  }
+}
+
+/* ============================================
+   Base Styles
+   ============================================ */
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  font-family: var(--font-sans);
+  font-size: 16px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  /* P1: 主题切换平滑过渡 */
+  transition: background-color var(--motion-duration-fast) ease, color var(--motion-duration-fast) ease;
+}
+
+/* P1: 所有使用 CSS 变量的元素添加过渡 */
+*,
+*::before,
+*::after {
+  transition: background-color var(--motion-duration-quick) ease,
+              border-color var(--motion-duration-quick) ease,
+              box-shadow var(--motion-duration-quick) ease,
+              color var(--motion-duration-quick) ease;
+}
+
+/* 禁用动画的元素 - 避免影响性能 */
+.no-transition,
+.no-transition *,
+.no-transition *::before,
+.no-transition *::after {
+  transition: none !important;
+}
+
+/* 避免动画元素被过渡影响 */
+.animate-spin,
+.animate-pulse,
+.animate-bounce,
+.animate-fadeIn,
+.animate-slideUp,
+.animate-scaleIn {
+  transition: none !important;
+}
+
+body {
+  background-color: var(--bg-secondary);
+  color: var(--text-primary);
+  min-height: 100vh;
+}
+
+::selection {
+  background: var(--bg-selected);
+  color: var(--text-primary);
+}
+
+:where(button, a, input, select, textarea, [tabindex]):focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+/* 滚动条样式：纤细圆角，默认淡显，悬停增强 */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--text-tertiary, #64748b) 18%, transparent) transparent;
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--text-tertiary, #64748b) 18%, transparent);
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: color-mix(in srgb, var(--text-secondary, #475569) 45%, transparent);
+}
+
+/* ============================================
+   Animation Keyframes
+   ============================================ */
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeInRight {
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideOutRight {
+  from {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateX(100%);
+  }
+}
+
+@keyframes ripple-animation {
+  to {
+    transform: scale(2.5);
+    opacity: 0;
+  }
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+
+/* ============================================
+   Motion Reveal - 骨架→内容一次性进入
+   用法：加在骨架之后挂载的内容容器上，挂载时自动播放一次
+   （透明度 + 轻微模糊 + 微小上移）。不设置 fill-mode，动画结束
+   后回到元素自身样式，不残留 filter/transform。常驻容器可用
+   条件类（loading 翻转会移除/重新挂上该类）让每次切换都触发。
+   注意：400ms 的 filter 动画会让容器在动画期间成为 position: fixed
+   后代的 containing block；未来在该容器内新增固定定位浮层时必须
+   Teleport 到 body（现有菜单均已如此）。
+   ============================================ */
+
+@keyframes motion-reveal {
+  from {
+    opacity: 0;
+    filter: blur(var(--motion-blur-small));
+    transform: translateY(var(--motion-distance-micro));
+  }
+  to {
+    opacity: 1;
+    filter: blur(0);
+    transform: translateY(0);
+  }
+}
+
+.motion-reveal {
+  animation: motion-reveal var(--motion-duration-slow) var(--motion-ease-in-out);
+}
+
+/* ============================================
+   Motion Shake - 错误反馈抖动
+   用法：JS 侧通过 remove class → void el.offsetWidth → re-add 重播。
+   仅使用 transform，分段递减振幅；reduced-motion 下经 token 降级
+   （时长 1ms、位移 0px），错误提示仍由文本内容承担。
+   ============================================ */
+
+@keyframes motion-shake {
+  0%, 100% { transform: translateX(0); }
+  16% { transform: translateX(calc(var(--motion-distance-small) * -1)); }
+  33% { transform: translateX(var(--motion-distance-small)); }
+  50% { transform: translateX(calc(var(--motion-distance-small) * -0.6)); }
+  66% { transform: translateX(calc(var(--motion-distance-small) * 0.6)); }
+  83% { transform: translateX(calc(var(--motion-distance-micro) * -1)); }
+}
+
+.motion-shake {
+  animation: motion-shake var(--motion-duration-fast) var(--motion-ease-in-out);
+}
+
+/* ============================================
+   Motion Field Error - 字段错误文案进入
+   用法：加在错误文案元素上，挂载时播放一次（滑入 + 淡入）。
+   reduced-motion 下经 token 降级为近乎即时出现。
+   ============================================ */
+
+@keyframes motion-field-error {
+  from {
+    opacity: 0;
+    transform: translateX(calc(var(--motion-distance-small) * -1));
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.motion-field-error {
+  animation: motion-field-error var(--motion-duration-quick) var(--motion-ease-out);
+}
+
+/* ============================================
+   Motion Collapse - 手风琴展开/收起
+   用法：外层 .motion-collapse（默认收起），加 .motion-collapse-open 展开；
+   唯一 grid 子元素 .motion-collapse-inner 负责裁剪，原有内容与 padding
+   原样放在 inner 内部（padding/border 不要落在 grid 容器上，否则 0fr
+   轨道会残留高度）。区域必须保持挂载（v-show 语义），不要用 v-if 卸载。
+   ============================================ */
+
+.motion-collapse {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows var(--motion-duration-fast) var(--motion-ease-out);
+}
+
+.motion-collapse.motion-collapse-open {
+  grid-template-rows: 1fr;
+}
+
+.motion-collapse > .motion-collapse-inner {
+  overflow: hidden;
+  min-height: 0;
+  /* 收起时内容必须同时脱离键盘焦点顺序：grid 0fr + overflow 只裁剪视觉，
+     内部 input/button 仍可被 Tab 命中。visibility 离散插值，展开时立即
+     visible，收起时在 transition 结束时翻回 hidden，与 grid-rows 时序一致；
+     reduced-motion 下时长 token 降级为 1ms，visibility 近乎即时翻转。 */
+  visibility: hidden;
+  transition: visibility var(--motion-duration-fast);
+}
+
+.motion-collapse.motion-collapse-open > .motion-collapse-inner {
+  visibility: visible;
+}
+
+/* ============================================
+   Motion Shimmer Text - AI 状态行扫光
+   用法：只加在当前活动状态行上（如“正在思考...”“部署进度”标题），
+   状态结束随 v-if/条件类卸载，页面同一时间最多一个实例。
+   基色 --text-tertiary、高光 --text-primary，深浅主题自动适配；
+   复用全局 shimmer keyframes，不另起定义。reduced-motion 下冻结为
+   静态弱化文本（无限循环动画无法靠时长 token 降级，需显式关闭）。
+   ============================================ */
+
+.motion-shimmer-text {
+  background: linear-gradient(
+    90deg,
+    var(--text-tertiary) 25%,
+    var(--text-primary) 50%,
+    var(--text-tertiary) 75%
+  );
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+  animation: shimmer 1.8s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .motion-shimmer-text {
+    animation: none;
+    background: none;
+    color: var(--text-tertiary);
+    -webkit-text-fill-color: currentColor;
+  }
+}
+
+/* ============================================
+   Button Interactions - P2 按钮微交互
+   ============================================ */
+
+/* 基础按钮点击反馈 - 统一使用 ease-out-expo */
+button:not(.no-btn-effect),
+.btn,
+.action-btn,
+.icon-btn,
+.nav-item,
+.category-tab,
+.link-item,
+.load-more-btn,
+.refresh-btn,
+.header-btn,
+.menu-item {
+  transition: transform var(--motion-duration-quick) var(--motion-ease-out),
+              box-shadow var(--motion-duration-quick) var(--motion-ease-out),
+              background-color var(--motion-duration-quick) var(--motion-ease-out);
+  /* 防止文字被选中 */
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* Active 态微反馈 - scale(0.98) 更精致 */
+button:not(.no-btn-effect):active:not(:disabled),
+.btn:active:not(:disabled),
+.action-btn:active:not(:disabled),
+.icon-btn:active:not(:disabled),
+.nav-item:active:not(.nav-item-active),
+.category-tab:active:not(.active),
+.link-item:active,
+.load-more-btn:active:not(:disabled),
+.refresh-btn:active:not(:disabled),
+.header-btn:active:not(:disabled),
+.menu-item:active {
+  transform: scale(0.98);
+  transition-duration: var(--motion-duration-micro);
+}
+
+/* 涟漪效果容器：确保子内容在涟漪之上 */
+[v-ripple],
+.ripple-enabled {
+  position: relative;
+  overflow: hidden;
+}
+
+[v-ripple] > *,
+.ripple-enabled > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* 资源页刷新按钮：以 Containers 页面工具栏按钮为统一基准 */
+.resource-refresh-btn {
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 38px;
+  width: 38px !important;
+  min-width: 38px;
+  max-width: 38px;
+  height: 38px !important;
+  min-height: 38px;
+  padding: 0 !important;
+  border: 1px solid var(--border-subtle) !important;
+  border-radius: 10px !important;
+  background: var(--bg-elevated) !important;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+
+.resource-refresh-btn:hover:not(:disabled) {
+  background: var(--bg-secondary) !important;
+  border-color: var(--border-default) !important;
+  color: var(--text-primary);
+}
+
+.resource-refresh-btn.is-spinning .resource-refresh-icon {
+  animation: resource-refresh-spin 0.75s linear infinite;
+}
+
+@keyframes resource-refresh-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* 禁用状态移除变形 */
+button:disabled,
+.btn:disabled,
+.action-btn:disabled,
+.icon-btn:disabled {
+  transform: none !important;
+  cursor: not-allowed;
+}
+
+/* 卡片类元素的点击反馈 */
+.app-card,
+.notification-item,
+.result-item {
+  transition: transform var(--motion-duration-quick) var(--motion-ease-out), box-shadow var(--motion-duration-quick) var(--motion-ease-out), border-color var(--motion-duration-quick) var(--motion-ease-out);
+}
+
+.app-card:active,
+.notification-item:active,
+.result-item:active {
+  transform: scale(0.995);
+  transition-duration: var(--motion-duration-micro);
+}
+
+/* ============================================
+   Custom Utilities
+   ============================================ */
+
+/* Operational console surface shared by logs, deploy streams and terminals. */
+.ops-console {
+  overflow: hidden;
+  border: 1px solid var(--border-subtle);
+  border-radius: 10px;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+}
+
+.ops-console__header {
+  min-height: 44px;
+  border-bottom: 1px solid var(--border-subtle);
+  background: color-mix(in srgb, var(--bg-secondary) 76%, var(--bg-elevated));
+}
+
+.ops-console__body {
+  overflow: auto;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: var(--font-mono, "JetBrains Mono", ui-monospace, monospace);
+  font-size: 0.8125rem;
+  line-height: 1.6;
+  scrollbar-gutter: stable;
+}
+
+.ops-console--standalone {
+  padding: 14px;
+}
+
+.line-clamp-1 {
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.line-clamp-3 {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.glass {
+  background: var(--bg-primary);
+  opacity: 0.8;
+  backdrop-filter: blur(12px);
+}
+
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}

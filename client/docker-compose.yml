@@ -1,0 +1,43 @@
+# 默认安装完整版镜像。
+# 社区版请使用 docker-compose.community.yml，并填写其独立发布镜像。
+services:
+  tradis:
+    image: coracoo/tradis:latest
+    container_name: tradis
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      BACKEND_PORT: 8080
+      GIN_MODE: release
+      JWT_SECRET: ${JWT_SECRET:?请设置至少 32 字符的随机密钥}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:?请设置管理员初始密码}
+      PROJECT_ROOT: ${PROJECT_ROOT:?请设置宿主机项目绝对路径}
+      BACKUP_ROOT: ${BACKUP_ROOT:-${PWD}/data/backups}
+      APPSTORE_CDN_URL: ${APPSTORE_CDN_URL:-https://tradis-templates.coracoo.deno.net}
+    ports:
+      - "${TRADIS_PORT:-8080}:8080"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./data:/app/client/backend/data
+      - ${PROJECT_ROOT:?请设置宿主机项目绝对路径}:/app/client/backend/project
+      - ${PROJECT_ROOT:?请设置宿主机项目绝对路径}:${PROJECT_ROOT:?请设置宿主机项目绝对路径}
+      - ${BACKUP_ROOT:-${PWD}/data/backups}:${BACKUP_ROOT:-${PWD}/data/backups}
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    cap_add:
+      - CHOWN
+      - SETGID
+      - SETUID
+      - KILL
+      - DAC_OVERRIDE
+    healthcheck:
+      test: ["CMD-SHELL", "nc -z 127.0.0.1 8080"]
+      interval: 30s
+      timeout: 5s
+      start_period: 30s
+      retries: 3

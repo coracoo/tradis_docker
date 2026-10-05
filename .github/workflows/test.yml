@@ -1,0 +1,41 @@
+name: Community Test
+
+on:
+  workflow_call:
+  push:
+  pull_request:
+
+jobs:
+  community:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install export gate dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ripgrep jq rsync
+      - name: Verify snapshot before build artifacts are created
+        if: startsWith(github.ref, 'refs/tags/')
+        run: bash scripts/check-community-release.sh "$PWD" "$GITHUB_REF_NAME"
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: client/backend/go.mod
+          cache-dependency-path: client/backend/go.sum
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Verify Community backend
+        working-directory: client/backend
+        run: |
+          go test -tags community ./...
+          go vet -tags community ./...
+      - name: Verify Community source boundary
+        run: |
+          bash scripts/check-community-dependencies.sh
+          bash scripts/check-community-export-secrets.sh
+          bash scripts/test-community-image-contract.sh
+      - name: Verify Community frontend
+        working-directory: client/frontend
+        run: |
+          npx --yes yarn@1.22.22 install --frozen-lockfile --non-interactive
+          npm run verify:community
