@@ -221,6 +221,44 @@ func buildInPlaceholders(n int) string {
 	return strings.Join(parts, ",")
 }
 
+// LatestComposeUpdatesInEnvironment returns persisted results per project/path,
+// independently of task-list pagination. Invalid legacy JSON is excluded.
+func LatestComposeUpdatesInEnvironment(environmentID string) ([]TaskRecord, error) {
+	if db == nil {
+		return nil, fmt.Errorf("数据库连接未初始化")
+	}
+	environmentID, err := normalizeTaskEnvironmentID(environmentID)
+	if err != nil {
+		return nil, err
+	}
+	rows, err := db.Query(`
+	WITH valid AS (
+	  SELECT id,environment_id,type,status,result_json,error,created_at,updated_at,
+	    COALESCE(NULLIF(json_extract(result_json,'$.composeProjectName'),''), json_extract(result_json,'$.project')) AS project_name,
+	    COALESCE(json_extract(result_json,'$.projectDir'),'') AS project_dir
+	  FROM tasks WHERE environment_id=? AND type='compose_update'
+	    AND status IN ('success','error','cancelled','canceled') AND json_valid(result_json)
+	), ranked AS (
+	  SELECT *, ROW_NUMBER() OVER(PARTITION BY project_name,project_dir ORDER BY created_at DESC,id DESC) AS ranking
+	  FROM valid WHERE project_name IS NOT NULL AND project_name<>''
+	)
+	SELECT id,environment_id,type,status,COALESCE(result_json,''),COALESCE(error,''),COALESCE(created_at,''),COALESCE(updated_at,'')
+	FROM ranked WHERE ranking=1 ORDER BY created_at DESC,id DESC`, environmentID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var tasks []TaskRecord
+	for rows.Next() {
+		var task TaskRecord
+		if err := rows.Scan(&task.ID, &task.EnvironmentID, &task.Type, &task.Status, &task.ResultJSON, &task.Error, &task.CreatedAt, &task.UpdatedAt); err != nil {
+			return nil, err
+		}
+		tasks = append(tasks, task)
+	}
+	return tasks, rows.Err()
+}
+
 // ListTasks 列出任务（支持按 type/status 过滤，默认按 updated_at 倒序）。
 func ListTasks(taskTypes []string, statuses []string, limit int) ([]TaskRecord, error) {
 	return ListTasksInEnvironment(LocalEnvironmentID, taskTypes, statuses, limit)

@@ -2,6 +2,7 @@ package api
 
 import (
 	"dockerpanel/backend/pkg/database"
+	"encoding/json"
 	"fmt"
 	"strings"
 	"time"
@@ -100,7 +101,18 @@ func streamDatabaseTaskEventsInEnvironment(c *gin.Context, environmentID, taskID
 			if len(tail) != 0 {
 				continue
 			}
-			writeLine(afterSeq+1, gin.H{"type": "result", "status": strings.ToLower(strings.TrimSpace(t.Status)), "taskId": taskID, "error": t.Error})
+			payload := gin.H{"type": "result", "status": strings.ToLower(strings.TrimSpace(t.Status)), "taskId": taskID, "error": t.Error}
+			if t.Type == "compose_update" {
+				// Only the update summary is public here; other task results may contain private data.
+				var result struct {
+					PullFailures   []composePullFailure   `json:"pullFailures,omitempty"`
+					ServiceUpdates []composeServiceUpdate `json:"serviceUpdates,omitempty"`
+				}
+				if json.Unmarshal([]byte(t.ResultJSON), &result) == nil && (len(result.PullFailures) > 0 || len(result.ServiceUpdates) > 0) {
+					payload["result"] = result
+				}
+			}
+			writeLine(afterSeq+1, payload)
 			return
 		}
 

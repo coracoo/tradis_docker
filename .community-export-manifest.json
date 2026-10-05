@@ -3,10 +3,10 @@
   "version": "0.9.7",
   "edition": "tradis-community",
   "buildTag": "community",
-  "generatedAt": "2026-10-05T14:25:13+08:00",
+  "generatedAt": "2026-10-05T20:13:54+08:00",
   "source": {
     "mode": "git-ref",
-    "commit": "b409a3b25ebda533dc2da45b40cabef21066536b",
+    "commit": "7e2c557d41ab0357ce0d9f232dc7e910a847b457",
     "dirty": false,
     "gitHistoryIncluded": false
   },
@@ -133,7 +133,7 @@
     },
     {
       "path": "client/backend/api/compose.go",
-      "sha256": "95d312e5a512bdcc217fa11988be71168f4e5bbf5a9fd01960d2f3e46debcbfb"
+      "sha256": "3e538133e45d758f16c5d0ede5898acbdcbe137f159405099aef1de58681d92a"
     },
     {
       "path": "client/backend/api/compose_deploy_edition_common.go",
@@ -178,6 +178,10 @@
     {
       "path": "client/backend/api/compose_service_adapter.go",
       "sha256": "7acdefbe3c5d595b4accf38b9d6338ce7d2a3b1bdf34cdf700f28a2202bd9265"
+    },
+    {
+      "path": "client/backend/api/compose_update.go",
+      "sha256": "7c02bca08c07dac4103de47558ca4973b8ec7d151ac42eab62c66ea1ff8fc42d"
     },
     {
       "path": "client/backend/api/container.go",
@@ -289,7 +293,7 @@
     },
     {
       "path": "client/backend/api/task_events.go",
-      "sha256": "57aa600a682dd0749e52451aca796a250107ae017437f2b09ecf570ddf1ca11f"
+      "sha256": "85a9ace2ac925376745de7139808645f650d9c38c6d9f22d79a306b35e59e8f1"
     },
     {
       "path": "client/backend/api/terminal.go",
@@ -461,7 +465,7 @@
     },
     {
       "path": "client/backend/pkg/database/task.go",
-      "sha256": "c776bd8327d783ce1ae9f6592fed5d813cd3979d7155745c7ce94fea3e0385e0"
+      "sha256": "a958dc24b73033178543e153f17a82f32477ace093a948a96fc2cbe4112ededf"
     },
     {
       "path": "client/backend/pkg/database/timestamp.go",
@@ -1037,7 +1041,7 @@
     },
     {
       "path": "client/frontend/src/components/layout/AppSidebar.vue",
-      "sha256": "47aa3f2467e41ffbec8b13b32ddaac03a82472aac9e554d2a2d74d70c04e344d"
+      "sha256": "0f5676fb65f4e731083dd4f06a79459b3520928bf5bdda6ddce9832f4de15640"
     },
     {
       "path": "client/frontend/src/components/layout/GlobalSearch.vue",
@@ -1317,7 +1321,7 @@
     },
     {
       "path": "client/frontend/src/views/AppStore/index.vue",
-      "sha256": "bcb92c7d71c197bf72bea8163a9a6af651c2f247e608de7a56db698ecaccbb64"
+      "sha256": "52797691e515c5cef8842b87d1e0dc88aa5a725b01bf12020ce588c04f8d3c29"
     },
     {
       "path": "client/frontend/src/views/AppStore/useTemplateManifestForm.js",
@@ -1349,7 +1353,7 @@
     },
     {
       "path": "client/frontend/src/views/Compose/components/ContainerMiniList.vue",
-      "sha256": "6369f6015dfdb320895249e813b9b9eb06902e44532551e1f0e817718e9810d1"
+      "sha256": "545dcb903fe2f31d9b731ed2a5c87babb886e482cb7c6d66586e044a44442991"
     },
     {
       "path": "client/frontend/src/views/Compose/components/EditDialog.vue",
@@ -1365,11 +1369,11 @@
     },
     {
       "path": "client/frontend/src/views/Compose/components/UpdateDialog.vue",
-      "sha256": "a23e4e0a5f6bbd01d765c3fd7c6366f5f56bd29ec1383df0de2ad0b1a92daec4"
+      "sha256": "cedbb8e13338ef3b8361d0e6c14aa8dd2687cb007a34bd827d97443ddd2ff92d"
     },
     {
       "path": "client/frontend/src/views/Compose/index.vue",
-      "sha256": "6641c50ff69f22952d80a18f42b5ddb9715a96ea36866e7d3cb5f80e3e423a87"
+      "sha256": "962add7f66f1d5c0593011a260f59035e1a356d0bb4ce906c127c8778eda6760"
     },
     {
       "path": "client/frontend/src/views/Compose/utils/projectIdentity.js",

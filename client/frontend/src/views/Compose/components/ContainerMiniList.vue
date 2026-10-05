@@ -24,8 +24,28 @@
           <span class="chip-signal"></span>
           <span class="chip-name">{{ getContainerName(container) }}</span>
           <span class="chip-meta">{{ getPortCount(container.Ports) }}</span>
-          <span v-if="hasUpdate(container)" class="chip-update-dot" title="镜像可更新"></span>
+          <span class="chip-update-statuses">
+            <span class="chip-update-status update-status" :class="`is-${updateState(container).tone}`">
+              {{ updateState(container).label }}
+            </span>
+            <span v-if="hasUpdate(container) && serviceUpdateForContainer(container)" class="chip-update-available update-status is-warning">
+              镜像可更新
+            </span>
+          </span>
+          <span v-if="hasUpdate(container)" class="chip-update-dot" title="镜像可更新" aria-label="镜像可更新"></span>
         </button>
+      </div>
+
+      <div v-if="serviceUpdates.length" class="rail-update-time">
+        最近更新：{{ formatDateTime(updateSummary.finishedAt) }}
+      </div>
+      <div v-if="missingServiceUpdates.length" class="missing-service-updates" role="status">
+        <span class="missing-service-heading">无当前容器的服务</span>
+        <div v-for="service in missingServiceUpdates" :key="service.service" class="missing-service-row">
+          <strong>{{ service.service }}</strong>
+          <span class="update-status" :class="`is-${serviceUpdateState(service).tone}`">{{ serviceUpdateState(service).label }}</span>
+          <span class="missing-service-reason">{{ service.message || '当前没有该服务的容器，请检查项目配置和更新日志' }}</span>
+        </div>
       </div>
     </section>
 
@@ -52,14 +72,27 @@
           </div>
         </div>
 
-        <span v-if="hasUpdate(selectedContainer)" class="detail-update-badge">
-          <DynamicIcon name="cloud-download" :size="13" />
-          镜像可更新
-        </span>
+        <div class="detail-update-badges">
+          <span v-if="hasUpdate(selectedContainer)" class="detail-update-badge detail-update-available update-status is-warning">
+            <DynamicIcon name="cloud-download" :size="13" />
+            镜像可更新
+          </span>
+          <span v-if="selectedServiceUpdate" class="detail-service-update-badge update-status" :class="`is-${serviceUpdateState(selectedServiceUpdate).tone}`">
+            {{ serviceUpdateState(selectedServiceUpdate).label }}
+          </span>
+        </div>
       </header>
+
+      <div v-if="selectedServiceUpdate" class="detail-update-result" role="status">
+        <span class="update-result-heading">最近更新 · {{ formatDateTime(updateSummary.finishedAt) }}</span>
+        <span>服务 {{ selectedServiceUpdate.service }}：{{ serviceUpdateState(selectedServiceUpdate).label }}</span>
+        <span v-if="selectedServiceUpdate.message">{{ selectedServiceUpdate.message }}</span>
+        <span v-if="selectedServiceUpdate.status === 'applied'">版本变化未确认</span>
+      </div>
 
       <div class="detail-actions-compact" data-remote-write>
         <button
+          v-if="hasUpdate(selectedContainer)"
           v-ripple
           class="action-item update"
           :disabled="isProcessing(selectedContainer?.Id)"
@@ -209,6 +242,7 @@
 </template>
 
 <script setup>
+import { computed } from 'vue'
 import DynamicIcon from '@/components/ui/DynamicIcon.vue'
 import { formatDateTime, formatDockerImageReference } from '@/utils/format.js'
 
@@ -216,6 +250,7 @@ const props = defineProps({
   containers: { type: Array, default: () => [] },
   selectedId: { type: String, default: '' },
   selectedContainer: { type: Object, default: null },
+  updateSummary: { type: Object, default: null },
   detailLoading: { type: Boolean, default: false },
   detailError: { type: String, default: '' },
   processingIds: {
@@ -225,6 +260,45 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['select', 'action', 'retry-detail'])
+
+const serviceUpdates = computed(() => Array.isArray(props.updateSummary?.services) ? props.updateSummary.services : [])
+const selectedServiceUpdate = computed(() => serviceUpdateForContainer(props.selectedContainer))
+const missingServiceUpdates = computed(() => {
+  const existingServices = new Set(props.containers.map(getServiceName).filter(Boolean))
+  return serviceUpdates.value.filter(service => service.service && !existingServices.has(service.service))
+})
+
+function getServiceName(container) {
+  return container?.Labels?.['com.docker.compose.service']
+    || container?.Config?.Labels?.['com.docker.compose.service']
+    || container?._service
+    || ''
+}
+
+function serviceUpdateForContainer(container) {
+  const service = getServiceName(container)
+  return service ? serviceUpdates.value.find(result => result.service === service) : null
+}
+
+function serviceUpdateState(result) {
+  const states = {
+    updated: { label: '已更新', tone: 'success' },
+    unchanged: { label: '无需更新', tone: 'muted' },
+    pull_failed: { label: '拉取失败', tone: 'warning' },
+    blocked: { label: '更新受阻', tone: 'warning' },
+    apply_failed: { label: '应用失败', tone: 'error' },
+    applied: { label: '已应用', tone: 'info' }
+  }
+  return states[result?.status] || { label: '更新结果未确认', tone: 'muted' }
+}
+
+function updateState(container) {
+  const result = serviceUpdateForContainer(container)
+  if (result) return serviceUpdateState(result)
+  return hasUpdate(container)
+    ? { label: '镜像可更新', tone: 'warning' }
+    : { label: '暂无已知更新', tone: 'muted' }
+}
 
 function isProcessing(id) {
   if (props.processingIds instanceof Set) {
@@ -477,7 +551,102 @@ function handleAction(action) {
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: var(--ops-amber);
+  background: var(--ops-red);
+}
+
+.chip-update-statuses {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  grid-column: 2 / -1;
+  justify-self: start;
+}
+
+.update-status {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 7px;
+  border: 1px solid var(--ops-line);
+  border-radius: 999px;
+  color: var(--ops-muted);
+  background: var(--ops-muted-soft);
+  font-size: 0.7rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.update-status.is-success {
+  color: var(--ops-green-strong);
+  background: var(--ops-green-soft);
+  border-color: color-mix(in srgb, var(--ops-green) 40%, var(--ops-line));
+}
+
+.update-status.is-warning {
+  color: var(--ops-amber);
+  background: var(--ops-amber-soft);
+  border-color: color-mix(in srgb, var(--ops-amber) 40%, var(--ops-line));
+}
+
+.update-status.is-error {
+  color: var(--ops-red);
+  background: color-mix(in srgb, var(--ops-red) 8%, var(--ops-panel));
+  border-color: color-mix(in srgb, var(--ops-red) 35%, var(--ops-line));
+}
+
+.update-status.is-info {
+  color: var(--ops-blue);
+  background: var(--ops-blue-soft);
+  border-color: color-mix(in srgb, var(--ops-blue) 35%, var(--ops-line));
+}
+
+.rail-update-time,
+.missing-service-updates {
+  grid-column: 1 / -1;
+  color: var(--ops-muted);
+  font-size: 0.75rem;
+}
+
+.missing-service-updates {
+  display: grid;
+  gap: 8px;
+  max-height: 160px;
+  overflow-y: auto;
+  padding-top: 10px;
+  border-top: 1px solid var(--ops-line);
+}
+
+.missing-service-heading {
+  font-weight: 700;
+}
+
+.missing-service-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+
+.missing-service-reason {
+  width: 100%;
+  overflow-wrap: anywhere;
+}
+
+.detail-update-result {
+  display: grid;
+  gap: 6px;
+  margin-top: 10px;
+  padding: 10px 12px;
+  border: 1px solid var(--ops-line);
+  border-radius: 8px;
+  background: var(--ops-panel);
+  color: var(--ops-ink);
+  font-size: 0.78rem;
+  overflow-wrap: anywhere;
+}
+
+.update-result-heading {
+  color: var(--ops-muted);
+  font-size: 0.72rem;
 }
 
 .empty-containers {
@@ -616,11 +785,17 @@ function handleAction(action) {
   white-space: nowrap;
 }
 
-.detail-update-badge {
+.detail-update-badge,
+.detail-service-update-badge {
   padding: 5px 9px;
-  border: 1px solid color-mix(in srgb, var(--ops-amber) 40%, var(--ops-line));
-  background: var(--ops-amber-soft);
-  color: var(--ops-amber);
+}
+
+.detail-update-badges {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+  flex-shrink: 0;
 }
 
 .detail-actions-compact {

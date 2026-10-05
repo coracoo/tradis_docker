@@ -124,7 +124,7 @@ async function startUpdateStream() {
   eventSource.onopen = () => {
     logs.value.push({
       type: 'info',
-      message: '连接成功，开始拉取镜像并创建容器（不会自动启动）...',
+      message: '连接成功，开始拉取镜像并更新容器，保持项目原有运行状态...',
       time: Date.now()
     })
   }
@@ -137,41 +137,61 @@ async function startUpdateStream() {
     try {
       payload = JSON.parse(event.data || '{}')
     } catch {
-      payload = { type: 'info', message: String(event.data || '') }
+      payload = { message: String(event.data || '') }
     }
 
     if (payload.type === 'result') {
+      if (updateCompleted) return
       streaming.value = false
       updateCompleted = true
       eventSource.close()
-      logs.value.push({
-        type: payload.status === 'success' ? 'success' : 'error',
-        message: payload.status === 'success' ? '更新任务完成' : `更新任务失败: ${payload.error || ''}`,
-        time: Date.now()
-      })
+      const succeeded = payload.status === 'success'
+      const pullFailures = Array.isArray(payload.result?.pullFailures) ? payload.result.pullFailures : []
+      let type = succeeded ? (pullFailures.length ? 'warning' : 'success') : 'error'
+      let message = succeeded
+          ? (pullFailures.length
+              ? `更新任务完成，但部分镜像拉取失败（${pullFailures.length} 项），对应服务使用本地镜像`
+              : '更新任务完成')
+          : `更新任务失败: ${payload.error || ''}`
+      const serviceUpdates = Array.isArray(payload.result?.serviceUpdates) ? payload.result.serviceUpdates : []
+      if (serviceUpdates.length) {
+        const labels = {
+          updated: '已更新', unchanged: '无需更新', applied: '已应用',
+          pull_failed: '拉取失败', blocked: '更新受阻', apply_failed: '应用失败', unknown: '结果未确认'
+        }
+        const counts = {}
+        for (const service of serviceUpdates) {
+          const status = Object.hasOwn(labels, service.status) ? service.status : 'unknown'
+          counts[status] = (counts[status] || 0) + 1
+        }
+        const completedCount = (counts.updated || 0) + (counts.unchanged || 0) + (counts.applied || 0)
+        const incomplete = completedCount !== serviceUpdates.length || pullFailures.length > 0
+        const partial = completedCount > 0 && (incomplete || !succeeded)
+        type = partial || (succeeded && incomplete) ? 'warning' : (succeeded ? 'success' : 'error')
+        const summary = Object.entries(labels)
+          .filter(([status]) => counts[status])
+          .map(([status, label]) => `${label} ${counts[status]} 个${status === 'applied' ? '（版本变化未确认）' : ''}`)
+          .join('，')
+        message = `${partial ? '更新部分完成' : (succeeded ? '更新任务完成' : '更新任务失败')}：${summary}`
+        if (pullFailures.length && !counts.pull_failed) message += `；部分镜像拉取失败（${pullFailures.length} 项）`
+        if (payload.error) message += `。${payload.error}`
+      }
+      logs.value.push({ type, message, time: Date.now() })
       emit('completed')
       return
     }
 
     const str = String(payload.message || '')
     
-    let type = 'info'
+    const hasStructuredType = ['error', 'warning', 'info', 'success'].includes(payload.type)
+    let type = hasStructuredType ? payload.type : 'info'
     let message = str
-    
-    if (str.startsWith('error:')) {
-      type = 'error'
-      message = str.substring(6).trim()
-    } else if (str.startsWith('warn:')) {
-      type = 'warning'
-      message = str.substring(5).trim()
-    } else if (str.startsWith('info:')) {
-      type = 'info'
-      message = str.substring(5).trim()
-    } else if (str.startsWith('success:')) {
-      type = 'success'
-      message = str.substring(8).trim()
-      if (message.includes('完成') || message.includes('成功')) {
-        updateCompleted = true
+
+    if (!hasStructuredType) {
+      const prefix = str.match(/^(error|warning|warn|info|success):\s*/)
+      if (prefix) {
+        type = prefix[1] === 'warn' ? 'warning' : prefix[1]
+        message = str.substring(prefix[0].length).trim()
       }
     }
     
@@ -186,16 +206,14 @@ async function startUpdateStream() {
   }
   
   eventSource.onerror = () => {
+    if (updateCompleted) return
     streaming.value = false
     eventSource.close()
-    if (!updateCompleted) {
-      logs.value.push({
-        type: 'warning',
-        message: '连接异常断开',
-        time: Date.now()
-      })
-    }
-    emit('completed')
+    logs.value.push({
+      type: 'warning',
+      message: '任务日志连接已断开，可稍后在任务中心查看结果',
+      time: Date.now()
+    })
   }
   
   eventSource.addEventListener('close', () => {

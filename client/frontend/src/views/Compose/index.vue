@@ -354,6 +354,7 @@
       <ContainerMiniList
         v-if="selectedProjectView"
         :containers="selectedProjectView.containers || []"
+        :update-summary="selectedProjectView.lastUpdate"
         :selected-id="selectedContainerId"
         :selected-container="selectedContainerView"
         :detail-loading="containerDetailLoading"

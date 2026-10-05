@@ -366,11 +366,7 @@ const categoryFilterOptions = computed(() =>
   categories.value.map(cat => ({ value: cat.id, label: cat.name, count: cat.count }))
 )
 
-const appStoreIndicatorTone = computed(() => {
-  if (appStoreStatus.value?.connected && appStoreStatus.value?.cdnConfigured) return 'success'
-  if (appStoreStatus.value?.connected) return 'warning'
-  return 'error'
-})
+const appStoreIndicatorTone = computed(() => appStoreStatus.value?.level || 'error')
 
 const appStoreIndicatorLabel = computed(() => {
   if (appStoreStatus.value?.connected && appStoreStatus.value?.cdnConfigured) return 'CDN'

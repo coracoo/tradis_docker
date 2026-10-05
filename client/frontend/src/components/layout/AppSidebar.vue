@@ -185,11 +185,7 @@ const showNewVersion = computed(() => {
   return hasNewVersion.value
 })
 
-const appStoreIndicatorTone = computed(() => {
-  if (appStoreStatus.value?.connected && appStoreStatus.value?.cdnConfigured) return 'success'
-  if (appStoreStatus.value?.connected) return 'warning'
-  return 'error'
-})
+const appStoreIndicatorTone = computed(() => appStoreStatus.value?.level || 'error')
 
 const appStoreIndicatorLabel = computed(() => {
   if (appStoreStatus.value?.connected && appStoreStatus.value?.cdnConfigured) return 'CDN'
