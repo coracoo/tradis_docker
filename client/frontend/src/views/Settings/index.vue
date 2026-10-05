@@ -212,20 +212,11 @@
               <p class="form-hint">用于自动生成外网访问的容器导航链接</p>
             </div>
             <EditionSettingsFields ref="fullServiceFieldsRef" v-model:fields="editionFields" section="service" />
-            <div class="form-group">
-              <label class="form-label">应用商店 CDN 地址</label>
-              <input v-model="settingsForm.appStoreCDNURL" class="form-input" placeholder="https://tradis-templates.coracoo.deno.net" />
-              <p v-if="!isFullEdition || cdnStatus?.speedtestDisabled" class="form-hint">模板读取优先使用 CDN</p>
-              <p v-else class="form-hint">模板读取优先使用 CDN；地址变化及每 24 小时会自动执行 Cloudflare 优选测速</p>
-              <div v-if="isFullEdition && !cdnStatus?.speedtestDisabled" class="cdn-status" :class="`is-${cdnStatusType}`">
-                <DynamicIcon :name="cdnStatus?.running ? 'refresh' : 'network'" :size="16" :class="{ 'spin-icon': cdnStatus?.running }" />
-                <div class="cdn-status-content">
-                  <span>{{ cdnStatusText }}</span>
-                  <span v-if="cdnStatus?.lastTestTime && cdnStatus?.bestIp" class="cdn-status-time">
-                    上次测速：{{ formatCDNTestTime(cdnStatus.lastTestTime) }}
-                  </span>
-                </div>
-              </div>
+            <div v-if="!isFullEdition" class="form-group">
+              <label class="form-label">应用商店内容源</label>
+              <input v-model="settingsForm.appStoreCDNURL" class="form-input" placeholder="https://github.com/coracoo/tradis_templates" />
+              <p v-if="isGitHubTemplateSource" class="form-hint">GitHub 模板仓库</p>
+              <p v-else class="form-hint">CDN 模板源</p>
             </div>
             <div class="form-group">
               <label class="form-label">镜像更新检查间隔（分钟）</label>
@@ -236,18 +227,6 @@
               <button v-ripple class="btn btn-primary" :class="{ 'is-loading': serverLoading }" :disabled="serverLoading" @click="saveServerSettings">
                 <span v-if="serverLoading" class="btn-spinner"></span>
                 保存配置
-              </button>
-              <button
-                v-if="isFullEdition && !cdnStatus?.speedtestDisabled"
-                v-ripple
-                type="button"
-                class="btn btn-default"
-                :class="{ 'is-loading': cdnRefreshing }"
-                :disabled="cdnRefreshing || !settingsForm.appStoreCDNURL.trim()"
-                @click="refreshCDNBestIP"
-              >
-                <span v-if="cdnRefreshing" class="btn-spinner"></span>
-                刷新优选 IP
               </button>
             </div>
           </div>
@@ -1150,8 +1129,13 @@ const diagnosticExporting = ref(false)
 const serverLoading = ref(false)
 const deploymentPolicyLoading = ref(false)
 const deploymentPolicySaving = ref(false)
-const cdnRefreshing = ref(false)
-const cdnStatus = ref(null)
+const isGitHubTemplateSource = computed(() => {
+  try {
+    return ['github.com', 'raw.githubusercontent.com'].includes(new URL(settingsForm.value.appStoreCDNURL).hostname)
+  } catch {
+    return false
+  }
+})
 const licenseStatus = ref({
   tier: 'free',
   state: 'free',
@@ -1259,21 +1243,6 @@ const aiModelsBaseUrlMismatch = computed(() => (
   isCacheBaseUrlMismatch(aiModelsCache.value, settingsForm.value.aiBaseUrl)
 ))
 
-const cdnStatusType = computed(() => {
-  if (cdnStatus.value?.running) return 'info'
-  if (cdnStatus.value?.bestIp) return 'success'
-  if (cdnStatus.value?.lastError) return 'warning'
-  return 'neutral'
-})
-
-const cdnStatusText = computed(() => {
-  if (!settingsForm.value.appStoreCDNURL.trim()) return '配置 CDN 地址后可执行优选测速'
-  if (cdnStatus.value?.running) return '正在重新测速，期间自动使用 CDN 域名访问'
-  if (cdnStatus.value?.bestIp) return `当前优选 IP：${cdnStatus.value.bestIp}`
-  if (cdnStatus.value?.lastError) return `优选 IP 不可用：${cdnStatus.value.lastError}`
-  return '尚无优选结果，当前使用 CDN 域名访问'
-})
-
 const loadLicenseStatus = async () => {
   if (!isFullEdition) return
   try {
@@ -1286,55 +1255,6 @@ const loadLicenseStatus = async () => {
 
 function onLicenseStatusChange(status) {
   licenseStatus.value = { ...licenseStatus.value, ...(status || {}) }
-}
-
-const formatCDNTestTime = (value) => {
-  const date = new Date(value)
-  if (Number.isNaN(date.getTime())) return '-'
-  return date.toLocaleString()
-}
-
-const loadCDNStatus = async () => {
-  if (!isFullEdition) return
-  try {
-    cdnStatus.value = await system.getCDNStatus()
-  } catch (error) {
-    console.error('加载 Cloudflare 优选状态失败:', error)
-  }
-}
-
-const waitForCDNRefresh = async () => {
-  for (let i = 0; i < 180; i += 1) {
-    await new Promise((resolve) => setTimeout(resolve, 1000))
-    await loadCDNStatus()
-    if (!cdnStatus.value?.running) return
-  }
-  throw new Error('测速仍在后台运行，请稍后查看状态')
-}
-
-const refreshCDNBestIP = async () => {
-  if (!settingsForm.value.appStoreCDNURL.trim()) {
-    toast.warning('请先填写并保存应用商店 CDN 地址')
-    return
-  }
-
-  cdnRefreshing.value = true
-  try {
-    await system.refreshCDNSpeedTest()
-    await loadCDNStatus()
-    await waitForCDNRefresh()
-    if (cdnStatus.value?.bestIp) {
-      toast.success(`Cloudflare 优选 IP 已更新：${cdnStatus.value.bestIp}`)
-    } else {
-      throw new Error(cdnStatus.value?.lastError || '测速未产生可用 IP')
-    }
-  } catch (error) {
-    console.error('刷新 Cloudflare 优选 IP 失败:', error)
-    toast.error('刷新优选 IP 失败: ' + (error.message || '未知错误'))
-    await loadCDNStatus()
-  } finally {
-    cdnRefreshing.value = false
-  }
 }
 
 const applyAiPreset = (preset) => {
@@ -1521,13 +1441,12 @@ const saveServerSettings = async () => {
     await settings.saveGlobal({
       lanUrl: settingsForm.value.lanUrl,
       wanUrl: settingsForm.value.wanUrl,
-      appStoreCDNURL: settingsForm.value.appStoreCDNURL,
+      ...(!isFullEdition ? { appStoreCDNURL: settingsForm.value.appStoreCDNURL } : {}),
       ...getEditionServerFields(editionFields.value),
       advancedMode: settingsForm.value.advancedMode,
       imageUpdateIntervalMinutes: settingsForm.value.imageUpdateIntervalMinutes
     })
     syncAdvancedModeLocal()
-    await loadCDNStatus()
     await fullServiceFieldsRef.value?.refresh?.()
     toast.success('配置已保存')
   } catch (error) {
@@ -1988,7 +1907,7 @@ async function refreshSettingsPage() {
     loadNotificationChannels()
   ])
   if (isFullEdition) {
-    await Promise.all([loadCDNStatus(), fullServiceFieldsRef.value?.refresh?.(), loadLicenseStatus()])
+    await Promise.all([fullServiceFieldsRef.value?.refresh?.(), loadLicenseStatus()])
   }
   toast.success('设置已刷新')
 }
@@ -2006,7 +1925,6 @@ onMounted(async () => {
   refreshVolumeOptions()
   loadNotificationChannels()
   if (isFullEdition) {
-    loadCDNStatus()
     fullServiceFieldsRef.value?.refresh?.()
     loadLicenseStatus()
   }
@@ -2163,49 +2081,6 @@ onMounted(async () => {
 .settings-card:hover {
   border-color: var(--border-default);
   box-shadow: var(--shadow-md);
-}
-
-.cdn-status {
-  display: flex;
-  align-items: flex-start;
-  gap: 8px;
-  margin-top: 10px;
-  padding: 10px 12px;
-  border: 1px solid var(--border-subtle);
-  border-radius: 8px;
-  color: var(--text-secondary);
-  background: var(--bg-secondary);
-  font-size: 0.8125rem;
-}
-
-.cdn-status.is-success {
-  color: var(--color-success-600);
-  border-color: color-mix(in srgb, var(--color-success-500) 32%, var(--border-subtle));
-}
-
-.cdn-status.is-info {
-  color: var(--color-primary);
-  border-color: color-mix(in srgb, var(--color-primary) 32%, var(--border-subtle));
-}
-
-.cdn-status.is-warning {
-  color: var(--color-warning-700);
-  border-color: color-mix(in srgb, var(--color-warning-500) 32%, var(--border-subtle));
-}
-
-.cdn-status-content {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-}
-
-.cdn-status-time {
-  color: var(--text-tertiary);
-  font-size: 12px;
-}
-
-.spin-icon {
-  animation: spin 0.8s linear infinite;
 }
 
 .card-header {

@@ -11,7 +11,8 @@ const pendingRemovals = new Map()
  * @returns {Promise<Array>} 镜像列表
  */
 export const listImages = (options = {}) => {
-  return get('/images', {}, options)
+  const { force, ...requestOptions } = options
+  return get('/images', force ? { force: '1' } : {}, requestOptions)
 }
 
 /**

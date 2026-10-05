@@ -46,7 +46,7 @@
     <section class="quick-links-section">
       <h2 class="section-title">快捷入口</h2>
       <div class="quick-links-grid">
-        <button class="quick-link-card nas-store" @click="router.push('/nas-store')">
+        <button v-if="isFullEdition" class="quick-link-card nas-store" @click="router.push('/nas-store')">
           <div class="quick-link-icon">
             <DynamicIcon name="hard-drive" :size="24" />
           </div>

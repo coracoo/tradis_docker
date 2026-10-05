@@ -703,6 +703,8 @@ func runImagePullTask(taskID string, imageName string, registry string, cleanupO
 		_ = database.AppendTaskLogWithSeq(taskID, seq, time.Now(), logType, message)
 	}
 	finish := func(status string, result any, errStr string) {
+		dockerImageDisplayCache.invalidate()
+		dockerDiskDisplayCache.invalidate()
 		_ = database.FinishTask(taskID, status, result, errStr)
 	}
 
@@ -906,6 +908,8 @@ func pullImageProgress(c *gin.Context) {
 	}
 
 	clearImageUpdateRecordsByImageRefs(imageName)
+	dockerImageDisplayCache.invalidate()
+	dockerDiskDisplayCache.invalidate()
 	push(map[string]any{"type": "done"})
 }
 
@@ -988,21 +992,7 @@ func pullImage(c *gin.Context) {
 
 // 展示镜像
 func listImages(c *gin.Context) {
-	cli, ok := getDockerClient(c)
-	if !ok {
-		return
-	}
-	defer cli.Close()
-
-	started := time.Now()
-	images, err := cli.ImageList(c.Request.Context(), types.ImageListOptions{})
-	recordDockerReadTiming(c, "list", started)
-	if err != nil {
-		respondError(c, http.StatusInternalServerError, "获取镜像列表失败", err)
-		return
-	}
-
-	c.JSON(http.StatusOK, images)
+	readDockerDisplayImages(c)
 }
 
 func imageRefMatches(a, b string) bool {

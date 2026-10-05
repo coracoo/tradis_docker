@@ -20,6 +20,8 @@ import (
 type CDNClient struct {
 	baseURL    string
 	httpClient *http.Client
+	repository bool
+	sourceErr  error
 }
 
 // TemplateManifest 模板清单 (列表视图)
@@ -78,8 +80,11 @@ type Variable struct {
 
 // NewCDNClient 创建 CDN 客户端
 func NewCDNClient(baseURL string) *CDNClient {
+	baseURL, repository, sourceErr := normalizeTemplateRepository(baseURL)
 	return &CDNClient{
-		baseURL: strings.TrimRight(baseURL, "/"),
+		baseURL:    strings.TrimRight(baseURL, "/"),
+		repository: repository,
+		sourceErr:  sourceErr,
 		httpClient: &http.Client{
 			Timeout: 10 * time.Second,
 		},
@@ -87,6 +92,9 @@ func NewCDNClient(baseURL string) *CDNClient {
 }
 
 func (c *CDNClient) shouldUseOptimizedIP(path string) bool {
+	if c.repository || c.sourceErr != nil {
+		return false
+	}
 	req, err := http.NewRequest(http.MethodGet, c.baseURL+path, nil)
 	if err != nil {
 		return true
@@ -166,6 +174,12 @@ func (c *CDNClient) fetchWithDomain(path string) ([]byte, error) {
 
 // FetchTemplates 获取模板列表
 func (c *CDNClient) FetchTemplates() ([]TemplateManifest, error) {
+	if c.sourceErr != nil {
+		return nil, c.sourceErr
+	}
+	if c.repository {
+		return c.fetchRepositoryIndex()
+	}
 	path := "/api/templates"
 
 	// 尝试使用最优 IP
@@ -200,6 +214,12 @@ func (c *CDNClient) FetchTemplates() ([]TemplateManifest, error) {
 
 // FetchTemplate 获取单个模板详情
 func (c *CDNClient) FetchTemplate(idOrName string) (*TemplateDetail, error) {
+	if c.sourceErr != nil {
+		return nil, c.sourceErr
+	}
+	if c.repository {
+		return c.fetchRepositoryTemplate(idOrName)
+	}
 	path := fmt.Sprintf("/api/templates/%s", idOrName)
 
 	// 尝试使用最优 IP
@@ -234,6 +254,12 @@ func (c *CDNClient) FetchTemplate(idOrName string) (*TemplateDetail, error) {
 
 // FetchRaw 原始请求 (用于 compose.yaml 等)
 func (c *CDNClient) FetchRaw(path string) ([]byte, error) {
+	if c.sourceErr != nil {
+		return nil, c.sourceErr
+	}
+	if c.repository {
+		return c.fetchRepositoryRaw(path)
+	}
 	// 尝试使用最优 IP
 	bestIP := GetBestIP()
 	if bestIP != "" && c.shouldUseOptimizedIP(path) {
@@ -251,6 +277,9 @@ func (c *CDNClient) FetchRaw(path string) ([]byte, error) {
 
 // FetchWithRetry 带重试的请求
 func (c *CDNClient) FetchWithRetry(path string, maxRetries int) ([]byte, error) {
+	if c.sourceErr != nil || c.repository {
+		return c.FetchRaw(path)
+	}
 	// 先尝试最优 IP
 	bestIPs := GetBestIPs()
 	if len(bestIPs) > 0 && c.shouldUseOptimizedIP(path) {

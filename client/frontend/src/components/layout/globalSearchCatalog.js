@@ -102,15 +102,6 @@ export const GLOBAL_SEARCH_PAGES = [
     route: { path: '/appstore' }
   },
   {
-    id: 'page-nas-store',
-    type: 'page',
-    name: 'NAS 选购',
-    description: '筛选和比较 NAS 设备',
-    icon: 'hard-drive',
-    keywords: ['nas', '导购', '设备', '型号', '处理器', '内存', '价格', '对比'],
-    route: { path: '/nas-store' }
-  },
-  {
     id: 'page-tutorials',
     type: 'page',
     name: '教程中心',

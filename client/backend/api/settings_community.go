@@ -258,8 +258,8 @@ func updateGlobalSettings(c *gin.Context) {
 		return
 	}
 	merged := mergeSettingsUpdate(current, req)
-	if merged.TutorialRSSURL != "" && !communityTutorialRSSURLAllowed(merged.TutorialRSSURL, merged.AppStoreCDNURL) {
-		respondError(c, http.StatusBadRequest, "公开教程 RSS 地址必须位于当前 CDN 或公开模板仓库的教程目录", nil)
+	if merged.TutorialRSSURL != "" && !communityTutorialRSSURLAllowed(merged.TutorialRSSURL) {
+		respondError(c, http.StatusBadRequest, "教程 RSS 地址必须是有效 HTTP(S) 地址，不支持内嵌账号密码", nil)
 		return
 	}
 	if err := settings.UpdateSettings(merged); err != nil {

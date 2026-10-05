@@ -1,14 +1,14 @@
 <template>
   <div v-if="section === 'service'" class="form-group">
-    <label class="form-label" for="community-tutorial-rss">公开教程 RSS 地址</label>
+    <label class="form-label" for="community-tutorial-rss">教程 RSS 地址</label>
     <input
       id="community-tutorial-rss"
       v-model="fields.tutorialRSSURL"
       class="form-input"
       type="url"
-      placeholder="留空使用公开 CDN 教程目录"
+      placeholder="https://example.com/feed.xml"
     />
-    <p class="form-hint">支持当前 CDN 或公开模板仓库的教程 RSS 文件。</p>
+    <p class="form-hint">自定义 HTTP(S) RSS 地址；留空不加载教程，与应用商店内容源独立。</p>
   </div>
 </template>
 

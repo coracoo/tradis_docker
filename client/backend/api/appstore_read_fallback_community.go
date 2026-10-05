@@ -3,7 +3,6 @@
 package api
 
 import (
-	"fmt"
 	"strings"
 
 	"github.com/gin-gonic/gin"
@@ -43,7 +42,6 @@ func fetchEditionAppStoreDetailFallback(string, appDetailCacheEntry, bool) (appS
 func buildEditionAppStoreStatusSummary() gin.H {
 	cdnURL := strings.TrimSpace(getAppStoreCDNURL())
 	cache := summarizeAppStoreCache()
-	cdnStatus := getCDNStatusSummary()
 
 	mode := "unconfigured"
 	if cdnURL != "" {
@@ -57,19 +55,10 @@ func buildEditionAppStoreStatusSummary() gin.H {
 	label := "不可用"
 	summary := "应用商店内容源不可用"
 	if mode == "cdn" {
-		if text := strings.TrimSpace(fmt.Sprintf("%v", cdnStatus["summary"])); text != "" {
-			summary = text
-		} else {
-			summary = "应用商店已配置 CDN"
-		}
+		summary = "应用商店已配置模板内容源"
 		state = "ready"
 		level = "success"
 		label = "可用"
-		if strings.TrimSpace(fmt.Sprintf("%v", cdnStatus["bestIp"])) == "" {
-			state = "degraded"
-			level = "warning"
-			label = "降级"
-		}
 	} else if mode == "cache" {
 		state = "cached"
 		level = "warning"

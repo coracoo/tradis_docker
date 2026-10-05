@@ -4,17 +4,11 @@
   "version": "0.9.7",
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "vite build",
+    "dev": "VITE_TRADIS_EDITION=community vite",
+    "build": "VITE_TRADIS_EDITION=community vite build",
     "build:community": "VITE_TRADIS_EDITION=community vite build",
-    "test:community": "VITE_TRADIS_EDITION=community vitest run src/community/__tests__",
-    "verify:community": "npm run test:community && npm run build:community && node scripts/verify-community-build.mjs",
-    "preview": "vite preview",
-    "test": "vitest",
-    "test:run": "vitest run",
-    "test:mobile": "node ../../scripts/mobile-layout-smoke.mjs",
-    "test:ui": "vitest --ui",
-    "test:coverage": "vitest run --coverage"
+    "verify:community": "npm run build:community && node scripts/verify-community-build.mjs",
+    "preview": "vite preview"
   },
   "dependencies": {
     "@element-plus/icons-vue": "^2.3.1",
@@ -41,20 +35,17 @@
     "@tailwindcss/postcss": "^4.2.0",
     "@tailwindcss/typography": "^0.5.19",
     "@vitejs/plugin-vue": "^5.0.0",
-    "@vue/test-utils": "^2.4.6",
     "autoprefixer": "^10.4.24",
-    "jsdom": "^24.0.0",
     "postcss": "^8.5.6",
     "tailwind-scrollbar": "^4.0.2",
     "tailwindcss": "^4.2.0",
     "unplugin-icons": "^0.20.2",
     "unplugin-vue-components": "^0.28.0",
-    "vite": "^5.0.0",
-    "vitest": "^2.1.1"
+    "vite": "^5.0.0"
   },
-  "description": "This template should help get you started developing with Vue 3 in Vite. The template uses Vue 3 `<script setup>` SFCs, check out the [script setup docs](https://v3.vuejs.org/api/sfc-script-setup.html#sfc-script-setup) to learn more.",
+  "description": "Local Docker management panel",
   "main": "vite.config.js",
   "keywords": [],
   "author": "",
-  "license": "ISC"
+  "license": "MIT"
 }

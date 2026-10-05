@@ -19,7 +19,6 @@ func RegisterCommunityRoutes(engine *gin.Engine, protected *gin.RouterGroup) {
 	RegisterFreeAIRoutes(protected)
 	registerEditionTutorialRoutes(protected)
 	RegisterSettingsRoutes(protected)
-	RegisterNASRoutes(protected)
 	RegisterPortRoutes(protected)
 	RegisterCleanupRoutes(protected)
 	RegisterScheduledTaskRoutes(protected)

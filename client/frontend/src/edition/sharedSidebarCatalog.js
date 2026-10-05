@@ -12,7 +12,6 @@ export const sharedSidebarCatalog = [
     title: '服务',
     items: [
       { path: '/appstore', label: '应用商店', ariaLabel: '应用商店', icon: 'store' },
-      { path: '/nas-store', label: 'NAS 选购', ariaLabel: 'NAS 选购', icon: 'hard-drive' },
       { path: '/tutorials', label: '教程', ariaLabel: '教程中心', icon: 'book-open' },
       { path: '/scheduled-tasks', label: '定时任务', ariaLabel: '定时任务', icon: 'clock', remoteRestricted: true }
     ]

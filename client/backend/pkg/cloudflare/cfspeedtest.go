@@ -652,7 +652,11 @@ func LoadCachedResult() error {
 
 func isCDNConfigured() bool {
 	s, err := settings.GetSettings()
-	return err == nil && strings.TrimSpace(s.AppStoreCDNURL) != ""
+	if err != nil || strings.TrimSpace(s.AppStoreCDNURL) == "" {
+		return false
+	}
+	_, repository, sourceErr := normalizeTemplateRepository(s.AppStoreCDNURL)
+	return !repository && sourceErr == nil
 }
 
 func runSpeedTestAsync(reason string, force bool) {
@@ -688,7 +692,8 @@ func runSpeedTestAsync(reason string, force bool) {
 func shouldTriggerForCDNChange(previousURL, currentURL string) bool {
 	previousURL = strings.TrimRight(strings.TrimSpace(previousURL), "/")
 	currentURL = strings.TrimRight(strings.TrimSpace(currentURL), "/")
-	return currentURL != "" && previousURL != currentURL
+	_, repository, err := normalizeTemplateRepository(currentURL)
+	return currentURL != "" && previousURL != currentURL && !repository && err == nil
 }
 
 // NotifyCDNURLChanged 在有效 CDN 地址新增或变化时异步触发一次重新测速。

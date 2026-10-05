@@ -220,7 +220,7 @@ export const useDockerResourcesStore = defineStore('dockerResources', () => {
   function loadImages(options = {}) {
     return loadResource('images', async (environmentId) => {
       const [imageList, containerList] = await Promise.all([
-        images.list(readOptions('/images', environmentId)),
+        images.list({ ...readOptions('/images', environmentId), force: !!options.force }),
         loadContainers(environmentId, options.force)
       ])
       return {

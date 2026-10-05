@@ -1,5 +1,4 @@
 .env*
-!client/.env.community.example
 !client/.env.example
 *.pem
 *.key

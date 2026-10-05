@@ -12,7 +12,6 @@ import (
 	"io"
 	"net/http"
 	"net/url"
-	"path"
 	"strings"
 	"time"
 
@@ -35,46 +34,34 @@ type communityRSSDocument struct {
 	} `xml:"channel"`
 }
 
-func communityTutorialRSSURLAllowed(raw, cdnBase string) bool {
+func communityTutorialRSSURLAllowed(raw string) bool {
 	source, err := url.Parse(strings.TrimSpace(raw))
-	if err != nil || source.User != nil || source.Host == "" || source.RawQuery != "" || source.Fragment != "" || source.RawPath != "" {
-		return false
-	}
-	if path.Clean(source.Path) != source.Path || !strings.HasSuffix(strings.ToLower(source.Path), ".xml") && !strings.HasSuffix(strings.ToLower(source.Path), ".rss") {
-		return false
-	}
-	base, err := url.Parse(strings.TrimRight(strings.TrimSpace(cdnBase), "/"))
-	if err != nil || base.Host == "" {
-		return false
-	}
-	if source.Scheme == base.Scheme && source.Host == base.Host {
-		prefix := strings.TrimRight(base.Path, "/")
-		return strings.HasPrefix(source.Path, prefix+"/api/community/tutorials/") ||
-			strings.HasPrefix(source.Path, prefix+"/tutorials/community/")
-	}
-	return source.Scheme == "https" && source.Host == "raw.githubusercontent.com" &&
-		strings.HasPrefix(source.Path, "/coracoo/tradis_templates/") &&
-		strings.Contains(source.Path, "/tutorials/community/")
+	return err == nil && (source.Scheme == "http" || source.Scheme == "https") &&
+		source.Hostname() != "" && source.User == nil && source.Fragment == ""
 }
 
-func configuredCommunityTutorialRSSURL(base string) (string, error) {
+func configuredCommunityTutorialRSSURL() (string, error) {
 	current, err := settings.GetSettings()
 	if err != nil {
 		return "", err
 	}
 	source := strings.TrimSpace(current.TutorialRSSURL)
-	if source != "" && !communityTutorialRSSURLAllowed(source, base) {
-		return "", errors.New("public tutorial RSS source is outside the configured CDN or public repository")
+	if source != "" && !communityTutorialRSSURLAllowed(source) {
+		return "", errors.New("tutorial RSS source must be an HTTP(S) URL without embedded credentials")
 	}
 	return source, nil
 }
 
-func fetchCommunityTutorialRSS(ctx context.Context, source, base string) ([]byte, error) {
+func fetchCommunityTutorialRSS(ctx context.Context, source string) ([]byte, error) {
+	if !communityTutorialRSSURLAllowed(source) {
+		return nil, errors.New("invalid tutorial RSS URL")
+	}
 	client := &http.Client{
 		Timeout: 10 * time.Second,
 		CheckRedirect: func(req *http.Request, via []*http.Request) error {
-			if len(via) > 0 && (req.URL.Scheme != via[0].URL.Scheme || req.URL.Host != via[0].URL.Host || len(via) >= 3 || !communityTutorialRSSURLAllowed(req.URL.String(), base)) {
-				return errors.New("public RSS redirect left public tutorial directory")
+			if len(via) >= 3 || !communityTutorialRSSURLAllowed(req.URL.String()) ||
+				(len(via) > 0 && via[0].URL.Scheme == "https" && req.URL.Scheme != "https") {
+				return errors.New("unsafe tutorial RSS redirect")
 			}
 			return nil
 		},
@@ -85,7 +72,8 @@ func fetchCommunityTutorialRSS(ctx context.Context, source, base string) ([]byte
 	}
 	response, err := client.Do(req)
 	if err != nil {
-		return nil, err
+		// A custom feed may carry an access token in its query string.
+		return nil, errors.New("tutorial RSS request failed; check source and connectivity")
 	}
 	defer response.Body.Close()
 	if response.StatusCode != http.StatusOK {
@@ -101,7 +89,7 @@ func fetchCommunityTutorialRSS(ctx context.Context, source, base string) ([]byte
 	return data, nil
 }
 
-func loadCommunityTutorialRSS(ctx context.Context, source, base string, force bool) (communityTutorialManifest, map[string]communityTutorialArticle, error) {
+func loadCommunityTutorialRSS(ctx context.Context, source string, force bool) (communityTutorialManifest, map[string]communityTutorialArticle, error) {
 	cache := communityTutorialCachePath(source, "feed.xml")
 	if !force {
 		if data, err := readCommunityTutorialCache(cache, true); err == nil {
@@ -110,7 +98,7 @@ func loadCommunityTutorialRSS(ctx context.Context, source, base string, force bo
 			}
 		}
 	}
-	data, fetchErr := fetchCommunityTutorialRSS(ctx, source, base)
+	data, fetchErr := fetchCommunityTutorialRSS(ctx, source)
 	if fetchErr == nil {
 		manifest, articles, parseErr := parseCommunityTutorialRSS(data)
 		if parseErr == nil {

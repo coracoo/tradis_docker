@@ -3,7 +3,9 @@ import path from 'node:path'
 
 export const COMMUNITY_BUILD_FORBIDDEN_TOKENS = Object.freeze([
   '/ai/agent',
-  '/api/nas/redirect',
+  '/nas-store',
+  '/nas/list',
+  '/api/nas/',
   '/api/license',
   '/api/environments',
   '/api/self-update',

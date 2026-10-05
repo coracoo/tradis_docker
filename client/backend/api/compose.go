@@ -2699,7 +2699,79 @@ type composeOperationOptions struct {
 }
 
 func composeUpdateCommands() (pullArgs []string, createArgs []string) {
-	return []string{"compose", "pull"}, []string{"compose", "create", "--remove-orphans"}
+	// 尽力拉取：单个镜像拉取失败不中断批次，失败服务保持本地镜像；
+	// 失败清单由调用方从进度行采集并显式汇总，成功态不得宣称全部镜像已更新。
+	return []string{"compose", "pull", "--ignore-pull-failures"}, []string{"compose", "create", "--remove-orphans"}
+}
+
+// composePullFailure 记录尽力拉取模式下单个失败的镜像或服务。
+type composePullFailure struct {
+	Service string `json:"service,omitempty"`
+	Image   string `json:"image,omitempty"`
+	Message string `json:"message"`
+}
+
+// parseComposePullFailureLine 识别 docker compose pull 的 plain 进度失败行。
+// 新版按镜像引用报告（"Image minio/mc:latest Error ..."），
+// 旧版按服务名报告（"rustfs-init Error ..."）；Pulling/Pulled/Skipped 不是失败。
+func parseComposePullFailureLine(line string) (composePullFailure, bool) {
+	trimmed := strings.TrimSpace(line)
+	if rest, ok := strings.CutPrefix(trimmed, "Image "); ok {
+		if idx := strings.Index(rest, " Error "); idx > 0 {
+			return composePullFailure{Image: strings.TrimSpace(rest[:idx]), Message: strings.TrimSpace(rest[idx+len(" Error "):])}, true
+		}
+		return composePullFailure{}, false
+	}
+	if idx := strings.Index(trimmed, " Error "); idx > 0 {
+		return composePullFailure{Service: strings.TrimSpace(trimmed[:idx]), Message: strings.TrimSpace(trimmed[idx+len(" Error "):])}, true
+	}
+	return composePullFailure{}, false
+}
+
+// composePullFailureTarget 失败项的展示名：有服务名用服务名，否则用镜像引用。
+func composePullFailureTarget(failure composePullFailure) string {
+	if failure.Service != "" {
+		return failure.Service
+	}
+	return failure.Image
+}
+
+// appendComposePullFailure 去重追加，避免同一失败的重试行重复计数。
+func appendComposePullFailure(failures *[]composePullFailure, seen map[string]bool, line string) {
+	failure, ok := parseComposePullFailureLine(line)
+	if !ok {
+		return
+	}
+	key := failure.Service + "\x00" + failure.Image + "\x00" + failure.Message
+	if seen[key] {
+		return
+	}
+	seen[key] = true
+	*failures = append(*failures, failure)
+}
+
+// logComposePullFailures 汇总输出尽力拉取的失败清单：不阻塞更新，但必须显式可见，
+// 且提示本地无该镜像时后续创建步骤可能失败——防止把部分失败伪装成完整成功。
+func logComposePullFailures(failures []composePullFailure, log func(logType, message string)) {
+	if len(failures) == 0 {
+		return
+	}
+	for _, failure := range failures {
+		log("warning", "镜像拉取失败 "+composePullFailureTarget(failure)+": "+failure.Message)
+	}
+	log("warning", fmt.Sprintf("共 %d 个镜像拉取失败，对应服务保持本地镜像；本地缺失该镜像时，后续创建步骤可能失败", len(failures)))
+}
+
+// composeProgressLogType 按进度行关键字分级任务日志。
+func composeProgressLogType(line string) string {
+	lower := strings.ToLower(line)
+	if strings.Contains(lower, "error") || strings.Contains(lower, "failed") {
+		return "error"
+	}
+	if strings.Contains(lower, "done") || strings.Contains(lower, "started") || strings.Contains(lower, "created") {
+		return "success"
+	}
+	return "info"
 }
 
 func composeBoolQuery(c *gin.Context, names ...string) bool {
@@ -3071,6 +3143,9 @@ func runComposeOperationTaskWithContext(ctx context.Context, taskID string, proj
 		}
 	}
 
+	// updatePullFailures 收集尽力拉取模式下单服务镜像拉取失败，进入任务结果。
+	var updatePullFailures []composePullFailure
+
 	runStep := func(label string, args []string) error {
 		appendLog("info", label)
 		onLine := func(line string) {
@@ -3078,14 +3153,7 @@ func runComposeOperationTaskWithContext(ctx context.Context, taskID string, proj
 			if line == "" {
 				return
 			}
-			logType := "info"
-			lower := strings.ToLower(line)
-			if strings.Contains(lower, "error") || strings.Contains(lower, "failed") {
-				logType = "error"
-			} else if strings.Contains(lower, "done") || strings.Contains(lower, "started") || strings.Contains(lower, "created") {
-				logType = "success"
-			}
-			appendLog(logType, line)
+			appendLog(composeProgressLogType(line), line)
 		}
 		args = composeCommandWithProjectName(composeProjectName, args)
 		if operation == "apply_config" || operation == "build_config" {
@@ -3245,14 +3313,32 @@ func runComposeOperationTaskWithContext(ctx context.Context, taskID string, proj
 			finish("error", nil, stateErr.Error())
 			return
 		}
+		// runPullStep 复用 runStep 的日志分级，同时采集尽力拉取的失败清单。
+		runPullStep := func(label string, args []string) ([]composePullFailure, error) {
+			appendLog("info", label)
+			var failures []composePullFailure
+			seen := map[string]bool{}
+			onLine := func(line string) {
+				line = strings.TrimSpace(line)
+				if line == "" {
+					return
+				}
+				appendLog(composeProgressLogType(line), line)
+				appendComposePullFailure(&failures, seen, line)
+			}
+			args = composeCommandWithProjectName(composeProjectName, args)
+			return failures, runComposeStreamLines(ctx, projectDir, args, onLine)
+		}
 		if options.Pull {
 			appendLog("info", "强制检查并拉取最新镜像")
 			pullArgs, _ := composeUpdateCommands()
-			if err := runStep("开始拉取最新镜像...", pullArgs); err != nil {
-				appendLog("error", "拉取镜像失败: "+err.Error())
-				finish("error", nil, err.Error())
+			failures, pullErr := runPullStep("开始拉取最新镜像...", pullArgs)
+			if pullErr != nil {
+				appendLog("error", "拉取镜像失败: "+pullErr.Error())
+				finish("error", nil, pullErr.Error())
 				return
 			}
+			updatePullFailures = failures
 		}
 		if options.Rebuild {
 			if err := runStep("开始无缓存重构镜像...", composeBuildArgs(options)); err != nil {
@@ -3264,10 +3350,13 @@ func runComposeOperationTaskWithContext(ctx context.Context, taskID string, proj
 		applyLabel, applyArgs, resultMessage := composeUpdateApplyCommand(wasRunning)
 		if err := runStep(applyLabel, applyArgs); err != nil {
 			appendLog("error", "应用更新失败: "+err.Error())
+			// 创建/启动失败时补充尽力拉取的失败清单，解释缺失镜像的来源。
+			logComposePullFailures(updatePullFailures, appendLog)
 			finish("error", nil, err.Error())
 			return
 		}
 		clearImageUpdateRecordsByImageRefs(resolveComposeUpdateCleanupImages(ctx, projectDir, composeProjectName)...)
+		logComposePullFailures(updatePullFailures, appendLog)
 		appendLog("success", resultMessage)
 	default:
 		err := fmt.Errorf("不支持的 Compose 操作: %s", operation)
@@ -3279,6 +3368,9 @@ func runComposeOperationTaskWithContext(ctx context.Context, taskID string, proj
 	result := gin.H{"project": projectName, "composeProjectName": composeProjectName, "operation": operation}
 	if operation == "apply_config" || operation == "build_config" {
 		result["configHash"] = options.ExpectedConfigHash
+	}
+	if operation == "update" && len(updatePullFailures) > 0 {
+		result["pullFailures"] = updatePullFailures
 	}
 	finish("success", result, "")
 }
@@ -3847,9 +3939,21 @@ func updateProjectEvents(c *gin.Context) {
 			send("info: 强制检查并拉取最新镜像...")
 			send("info: 开始拉取最新镜像...")
 			pullArgs, _ := composeUpdateCommands()
-			if err := runComposeStreamLines(ctx, target.ProjectDir, composeCommandWithProjectName(target.ComposeProjectName, pullArgs), send); err != nil {
+			var pullFailures []composePullFailure
+			pullSeen := map[string]bool{}
+			sendPullLine := func(line string) {
+				send(line)
+				appendComposePullFailure(&pullFailures, pullSeen, line)
+			}
+			if err := runComposeStreamLines(ctx, target.ProjectDir, composeCommandWithProjectName(target.ComposeProjectName, pullArgs), sendPullLine); err != nil {
 				send(fmt.Sprintf("error: 拉取镜像失败: %s", err.Error()))
 				return
+			}
+			for _, failure := range pullFailures {
+				send("warning: 镜像拉取失败 " + composePullFailureTarget(failure) + ": " + failure.Message)
+			}
+			if len(pullFailures) > 0 {
+				send(fmt.Sprintf("warning: %d 个镜像拉取失败，对应服务保持本地镜像；本地缺失该镜像时，后续创建步骤可能失败", len(pullFailures)))
 			}
 		}
 

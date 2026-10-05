@@ -138,12 +138,15 @@ func GetSettings() (Settings, error) {
 	s.WanUrl = getValue("wan_url")
 	// 应用商店 CDN 地址优先级：环境变量 > DB(global_settings) > 内置默认值。
 	// 内置默认值保证新部署开箱可用，无需手动配置即能读取应用商店模板。
-	const defaultAppStoreCDNURL = "https://tradis-templates.coracoo.deno.net"
+	const defaultAppStoreCDNURL = "https://github.com/coracoo/tradis_templates"
 	s.AppStoreCDNURL = strings.TrimSpace(getValue("appstore_cdn_url"))
 	if env := strings.TrimSpace(os.Getenv("APPSTORE_CDN_URL")); env != "" {
 		s.AppStoreCDNURL = env
 	} else if s.AppStoreCDNURL == "" {
 		s.AppStoreCDNURL = defaultAppStoreCDNURL
+	}
+	if !SupportsAppStoreContentSource {
+		s.AppStoreCDNURL = ""
 	}
 	parseInt := func(v string, def int) int {
 		if v == "" {

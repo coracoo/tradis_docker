@@ -1,8 +1,0 @@
-# Local source build only; production uses docker-compose.community.yml alone.
-services:
-  tradis-community:
-    build:
-      context: .
-      dockerfile: Dockerfile.community
-      args:
-        CLIENT_VERSION: v0.9.7 # x-release-please-version

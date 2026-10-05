@@ -54,24 +54,6 @@ export const sharedChildRoutes = [
     component: () => import('../views/AppStore/Deploy.vue')
   },
   {
-    path: '/nas-store',
-    name: 'NasStore',
-    meta: { title: 'NAS 选购' },
-    component: () => import('../views/NasStore/index.vue')
-  },
-  {
-    path: '/nas-store/topic/:slug',
-    name: 'NasTopic',
-    meta: { title: 'NAS 专题' },
-    component: () => import('../views/NasStore/Topic.vue')
-  },
-  {
-    path: '/nas-store/review/:id',
-    name: 'NasReview',
-    meta: { title: 'NAS 评测' },
-    component: () => import('../views/NasStore/Review.vue')
-  },
-  {
     path: '/tutorials',
     name: 'Tutorials',
     meta: { title: '教程' },

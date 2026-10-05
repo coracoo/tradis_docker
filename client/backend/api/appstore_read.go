@@ -23,6 +23,9 @@ import (
 var (
 	settingsGetSettings = settings.GetSettings
 	getAppCacheDirFunc  = func() string {
+		if !settings.SupportsAppStoreContentSource {
+			return filepath.Join(settings.GetDataDir(), "apps", "official-v1")
+		}
 		return filepath.Join(settings.GetDataDir(), "apps")
 	}
 )
@@ -125,6 +128,9 @@ func containsLegacyAppStoreAssetProxyURL(apps []App) bool {
 }
 
 func getAppStoreCDNURL() string {
+	if !settings.SupportsAppStoreContentSource {
+		return ""
+	}
 	s, err := settingsGetSettings()
 	if err != nil {
 		return ""

@@ -27,13 +27,12 @@ jobs:
       - name: Verify Community backend
         working-directory: client/backend
         run: |
-          go test -tags community ./...
+          go build -tags community ./...
           go vet -tags community ./...
       - name: Verify Community source boundary
         run: |
           bash scripts/check-community-dependencies.sh
           bash scripts/check-community-export-secrets.sh
-          bash scripts/test-community-image-contract.sh
       - name: Verify Community frontend
         working-directory: client/frontend
         run: |

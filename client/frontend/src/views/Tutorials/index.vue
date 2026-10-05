@@ -29,7 +29,7 @@
         </div>
         <div v-else-if="filteredArticles.length === 0" class="state">
           <DynamicIcon name="book-open" :size="24" />
-          <span>暂无教程</span>
+          <span>{{ tutorialGoActionsEnabled ? '暂无教程' : '暂无教程，请在设置中配置教程 RSS 地址' }}</span>
         </div>
         <template v-else>
           <button
@@ -187,7 +187,7 @@ const filteredArticles = computed(() => {
 })
 
 const manifestSummary = computed(() => {
-  if (articles.value.length === 0) return tutorialGoActionsEnabled ? '官方部署文章与实战指南' : '公开部署文章与实战指南'
+  if (articles.value.length === 0) return tutorialGoActionsEnabled ? '官方部署文章与实战指南' : '自定义 RSS 教程'
   return `${articles.value.length} 篇教程`
 })
 
